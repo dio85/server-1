@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,10 @@
 #include "Common.h"
 #include "Platform/Define.h"
 #include "Policies/Singleton.h"
-#include "ace/Recursive_Thread_Mutex.h"
+#include <ace/Recursive_Thread_Mutex.h>
 #include "Map.h"
 #include "GridStates.h"
+#include "MapUpdater.h"
 
 class Transport;
 class BattleGround;
@@ -60,10 +61,6 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
 {
         friend class MaNGOS::OperatorNew<MapManager>;
 
-        typedef ACE_Recursive_Thread_Mutex LOCK_TYPE;
-        typedef ACE_Guard<LOCK_TYPE> LOCK_TYPE_GUARD;
-        typedef MaNGOS::ClassLevelLockable<MapManager, ACE_Recursive_Thread_Mutex>::Lock Guard;
-
     public:
         typedef std::map<MapID, Map* > MapMapType;
 
@@ -82,20 +79,27 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         void SetGridCleanUpDelay(uint32 t)
         {
             if (t < MIN_GRID_DELAY)
+            {
                 i_gridCleanUpDelay = MIN_GRID_DELAY;
+            }
             else
+            {
                 i_gridCleanUpDelay = t;
+            }
         }
 
         void SetMapUpdateInterval(uint32 t)
         {
             if (t > MIN_MAP_UPDATE_DELAY)
+            {
                 t = MIN_MAP_UPDATE_DELAY;
+            }
 
             i_timer.SetInterval(t);
             i_timer.Reset();
         }
 
+        // void LoadGrid(int mapid, int instId, float x, float y, const WorldObject* obj, bool no_unload = false);
         void UnloadAll();
 
         static bool ExistMapAndVMap(uint32 mapid, float x, float y);
@@ -119,6 +123,21 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         static bool IsValidMapCoord(WorldLocation const& loc)
         {
             return IsValidMapCoord(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation);
+        }
+
+        // modulos a radian orientation to the range of 0..2PI
+        static float NormalizeOrientation(float o)
+        {
+            // fmod only supports positive numbers. Thus we have
+            // to emulate negative numbers
+            if (o < 0)
+            {
+                float mod = o * -1;
+                mod = fmod(mod, 2.0f * M_PI_F);
+                mod = -mod + 2.0f * M_PI_F;
+                return mod;
+            }
+            return fmod(o, 2.0f * M_PI_F);
         }
 
         void RemoveAllObjectsInRemoveList();
@@ -168,6 +187,11 @@ class MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::ClassLevelLockab
         uint32 i_gridCleanUpDelay;
         MapMapType i_maps;
         IntervalTimer i_timer;
+        MapUpdater m_updater;
+        uint32 i_MaxInstanceId;
+
+        typedef ACE_Recursive_Thread_Mutex LOCK_TYPE;
+        mutable LOCK_TYPE m_lock;
 };
 
 template<typename Do>

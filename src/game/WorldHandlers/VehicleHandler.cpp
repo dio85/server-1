@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,9 @@ void WorldSession::HandleRequestVehicleExit(WorldPacket& recvPacket)
     // Check for exit flag
     if (VehicleSeatEntry const* seatEntry = vehicle->GetVehicleInfo()->GetSeatEntry(transportInfo->GetTransportSeat()))
         if (seatEntry->m_flags & SEAT_FLAG_CAN_EXIT)
+        {
             vehicle->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE, _player->GetObjectGuid());
+        }
 }
 
 void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket& recvPacket)
@@ -154,10 +156,14 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket& recvPacket)
         SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(destVehicle->GetEntry());
         for (SpellClickInfoMap::const_iterator itr = clickPair.first; itr != clickPair.second; ++itr)
             if (itr->second.IsFitToRequirements(_player, destVehicle->GetTypeId() == TYPEID_UNIT ? (Creature*)destVehicle : NULL))
+            {
                 _player->CastSpell(destVehicle, itr->second.spellId, true);
+            }
     }
     else
+    {
         srcVehicle->GetVehicleInfo()->SwitchSeat(_player, seat);
+    }
 }
 
 void WorldSession::HandleRideVehicleInteract(WorldPacket& recvPacket)
@@ -216,7 +222,9 @@ void WorldSession::HandleEjectPassenger(WorldPacket& recvPacket)
     // Check for eject flag
     if (VehicleSeatEntry const* seatEntry = vehicleInfo->GetSeatEntry(passenger->GetTransportInfo()->GetTransportSeat()))
         if (seatEntry->m_flagsB & SEAT_FLAG_B_EJECTABLE)
+        {
             _player->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE, passengerGuid);
+        }
 }
 
 void WorldSession::HandleRequestVehiclePrevSeat(WorldPacket& recv_data)

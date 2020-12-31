@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include "Common.h"
 #include "Platform/Define.h"
 #include "Policies/Singleton.h"
-#include "ace/Thread_Mutex.h"
+#include <ace/Thread_Mutex.h>
 #include <list>
 #include <map>
 #include "Utilities/UnorderedMapSet.h"
@@ -37,8 +37,6 @@
 #include "DBCStores.h"
 #include "ObjectGuid.h"
 #include "PoolManager.h"
-
-#include <mutex>
 
 struct InstanceTemplate;
 struct MapEntry;
@@ -93,7 +91,9 @@ class MapPersistentState
         {
             m_usedByMap = map;
             if (!map)
+            {
                 UnloadIfEmpty();
+            }
         }
 
         time_t GetCreatureRespawnTime(uint32 loguid) const
@@ -196,8 +196,8 @@ class DungeonPersistentState : public MapPersistentState
 
         InstanceTemplate const* GetTemplate() const;
 
-        uint8 GetPlayerCount() const { return m_playerList.size(); }
-        uint8 GetGroupCount() const { return m_groupList.size(); }
+        uint8 GetPlayerCount() const { return (uint8)m_playerList.size(); }
+        uint8 GetGroupCount() const { return (uint8)m_groupList.size(); }
 
         /* online players bound to the instance (perm/solo)
            does not include the members of the group unless they have permanent saves */
@@ -213,7 +213,7 @@ class DungeonPersistentState : public MapPersistentState
         void SetResetTime(time_t resetTime) { m_resetTime = resetTime; }
         time_t GetResetTimeForDB() const;
 
-        /* instances cannot be reset (except at the global reset time)
+        /* instances can not be reset (except at the global reset time)
            if there are players permanently bound to it
            this is cached for the case when those players are offline */
         bool CanReset() const { return m_canReset; }
@@ -277,15 +277,15 @@ class BattleGroundPersistentState : public MapPersistentState
 
 enum ResetEventType
 {
-    RESET_EVENT_NORMAL_DUNGEON      = 0,                    // no fixed reset time
-    RESET_EVENT_INFORM_1            = 1,                    // raid/heroic warnings
-    RESET_EVENT_INFORM_2            = 2,
-    RESET_EVENT_INFORM_3            = 3,
-    RESET_EVENT_INFORM_LAST         = 4,
-    RESET_EVENT_FORCED_INFORM_1     = 5,
-    RESET_EVENT_FORCED_INFORM_2     = 6,
-    RESET_EVENT_FORCED_INFORM_3     = 7,
-    RESET_EVENT_FORCED_INFORM_LAST  = 8,
+    RESET_EVENT_NORMAL_DUNGEON     = 0,                         // no fixed reset time
+    RESET_EVENT_INFORM_1           = 1,                         // raid/heroic warnings
+    RESET_EVENT_INFORM_2           = 2,
+    RESET_EVENT_INFORM_3           = 3,
+    RESET_EVENT_INFORM_LAST        = 4,
+    RESET_EVENT_FORCED_INFORM_1    = 5,
+    RESET_EVENT_FORCED_INFORM_2    = 6,
+    RESET_EVENT_FORCED_INFORM_3    = 7,
+    RESET_EVENT_FORCED_INFORM_LAST = 8,
 };
 
 #define MAX_RESET_EVENT_TYPE   9
@@ -332,6 +332,7 @@ class DungeonResetScheduler
         void Update();
 
         void ResetAllRaid();
+
     private:                                                // fields
         MapPersistentStateManager& m_InstanceSaves;
 
@@ -415,15 +416,21 @@ inline void MapPersistentStateManager::DoForAllStatesWithMapId(uint32 mapId, Do&
         for (PersistentStateMap::iterator itr = m_instanceSaveByInstanceId.begin(); itr != m_instanceSaveByInstanceId.end();)
         {
             if (itr->second->GetMapId() == mapId)
+            {
                 _do((itr++)->second);
+            }
             else
+            {
                 ++itr;
+            }
         }
     }
     else
     {
         if (MapPersistentState* state = GetPersistentState(mapId, 0))
+        {
             _do(state);
+        }
     }
 }
 

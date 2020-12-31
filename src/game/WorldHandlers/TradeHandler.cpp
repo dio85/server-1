@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,7 +112,9 @@ void WorldSession::SendUpdateTrade(bool trader_state /*= true*/)
     uint8 itemCount = 0;
     for (uint8 i = 0; i < TRADE_SLOT_COUNT; ++i)
         if (Item* item = view_trade->GetItem(TradeSlots(i)))
+        {
             ++itemCount;
+        }
 
     data.WriteBits(itemCount, 22);
 
@@ -238,21 +240,33 @@ void WorldSession::moveItems(Item* myItems[], Item* hisItems[])
             if (myItems[i])
             {
                 if (!traderCanTrade)
+                {
                     sLog.outError("trader can't store item: %s", myItems[i]->GetGuidStr().c_str());
+                }
                 if (_player->CanStoreItem(NULL_BAG, NULL_SLOT, playerDst, myItems[i], false) == EQUIP_ERR_OK)
+                {
                     _player->MoveItemToInventory(playerDst, myItems[i], true, true);
+                }
                 else
+                {
                     sLog.outError("player can't take item back: %s", myItems[i]->GetGuidStr().c_str());
+                }
             }
             // return the already removed items to the original owner
             if (hisItems[i])
             {
                 if (!playerCanTrade)
+                {
                     sLog.outError("player can't store item: %s", hisItems[i]->GetGuidStr().c_str());
+                }
                 if (trader->CanStoreItem(NULL_BAG, NULL_SLOT, traderDst, hisItems[i], false) == EQUIP_ERR_OK)
+                {
                     trader->MoveItemToInventory(traderDst, hisItems[i], true, true);
+                }
                 else
+                {
                     sLog.outError("trader can't take item back: %s", hisItems[i]->GetGuidStr().c_str());
+                }
             }
         }
     }
@@ -296,9 +310,13 @@ static void clearAcceptTradeMode(Item** myItems, Item** hisItems)
     for (int i = 0; i < TRADE_SLOT_TRADED_COUNT; ++i)
     {
         if (myItems[i])
+        {
             myItems[i]->SetInTrade(false);
+        }
         if (hisItems[i])
+        {
             hisItems[i]->SetInTrade(false);
+        }
     }
 }
 
@@ -529,10 +547,14 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
         trader->ModifyMoney(my_trade->GetMoney());
 
         if (my_spell)
+        {
             my_spell->SpellStart(&my_targets);
+        }
 
         if (his_spell)
+        {
             his_spell->SpellStart(&his_targets);
+        }
 
         // cleanup
         clearAcceptTradeMode(my_trade, his_trade);
@@ -593,7 +615,9 @@ void WorldSession::HandleCancelTradeOpcode(WorldPacket& /*recvPacket*/)
 {
     // sent also after LOGOUT COMPLETE
     if (_player)                                            // needed because STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT
+    {
         _player->TradeCancel(true);
+    }
 }
 
 void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
@@ -631,7 +655,7 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    Player* pOther = ObjectAccessor::FindPlayer(otherGuid);
+    Player* pOther = sObjectAccessor.FindPlayer(otherGuid);
 
     if (!pOther)
     {

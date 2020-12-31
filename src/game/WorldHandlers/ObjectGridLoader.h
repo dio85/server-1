@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,14 +73,14 @@ class ObjectGridUnloader
             {
                 for (unsigned int y = 0; y < MAX_NUMBER_OF_CELLS; ++y)
                 {
-                    GridLoader<Player, AllWorldObjectTypes, AllGridObjectTypes> loader;
+                    GridLoader<Player, WorldTypeMapContainer, GridTypeMapContainer> loader;
                     loader.Unload(i_grid(x, y), *this);
                 }
             }
         }
 
         void Unload(GridType& grid);
-        template<class T> void Visit(GridRefManager<T> &m);
+        template<class T> void Visit(GridRefManager<T>& m);
     private:
         NGridType& i_grid;
 };
@@ -97,7 +97,7 @@ class ObjectGridStoper
             {
                 for (unsigned int y = 0; y < MAX_NUMBER_OF_CELLS; ++y)
                 {
-                    GridLoader<Player, AllWorldObjectTypes, AllGridObjectTypes> loader;
+                    GridLoader<Player, WorldTypeMapContainer, GridTypeMapContainer> loader;
                     loader.Stop(i_grid(x, y), *this);
                 }
             }
@@ -106,11 +106,11 @@ class ObjectGridStoper
         void Stop(GridType& grid);
         void Visit(CreatureMapType& m);
 
-        template<class NONACTIVE> void Visit(GridRefManager<NONACTIVE> &) {}
+        template<class NONACTIVE> void Visit(GridRefManager<NONACTIVE>&) {}
     private:
         NGridType& i_grid;
 };
 
-typedef GridLoader<Player, AllWorldObjectTypes, AllGridObjectTypes> GridLoaderType;
+typedef GridLoader<Player, WorldTypeMapContainer, GridTypeMapContainer> GridLoaderType;
 
 #endif

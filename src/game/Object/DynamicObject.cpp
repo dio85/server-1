@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,13 +79,6 @@ bool DynamicObject::Create(uint32 guidlow, Unit* caster, uint32 spellId, SpellEf
         return false;
     }
 
-    SpellEntry const* spellProto = sSpellStore.LookupEntry(spellId);
-    if (!spellProto)
-    {
-        sLog.outError("DynamicObject (spell %u) not created. Spell not exist!", spellId);
-        return false;
-    }
-
     SetEntry(spellId);
     SetObjectScale(DEFAULT_OBJECT_SCALE);
 
@@ -102,11 +95,19 @@ bool DynamicObject::Create(uint32 guidlow, Unit* caster, uint32 spellId, SpellEf
     bytes |= 0x00 << 16;
     bytes |= 0x00 << 24;
     */
+    SpellEntry const* spellProto = sSpellStore.LookupEntry(spellId);
+
     SetUInt32Value(DYNAMICOBJECT_BYTES, spellProto->SpellVisual[0] | (type << 28));
 
     SetUInt32Value(DYNAMICOBJECT_SPELLID, spellId);
     SetFloatValue(DYNAMICOBJECT_RADIUS, radius);
     SetUInt32Value(DYNAMICOBJECT_CASTTIME, WorldTimer::getMSTime());    // new 2.4.0
+
+    if (!spellProto)
+    {
+        sLog.outError("DynamicObject (spell %u) not created. Spell not exist!", spellId);
+        return false;
+    }
 
     m_aliveDuration = duration;
     m_radius = radius;
@@ -120,7 +121,7 @@ bool DynamicObject::Create(uint32 guidlow, Unit* caster, uint32 spellId, SpellEf
 Unit* DynamicObject::GetCaster() const
 {
     // can be not found in some cases
-    return ObjectAccessor::GetUnit(*this, GetCasterGuid());
+    return sObjectAccessor.GetUnit(*this, GetCasterGuid());
 }
 
 void DynamicObject::Update(uint32 /*update_diff*/, uint32 p_time)
@@ -185,7 +186,9 @@ void DynamicObject::Delay(int32 delaytime)
             {
                 SpellEffectEntry const* effect = holder->GetSpellProto()->GetSpellEffect(SpellEffectIndex(i));
                 if(!effect)
+                {
                     continue;
+                }
                 if ((effect->Effect == SPELL_EFFECT_PERSISTENT_AREA_AURA || effect->Effect == SPELL_EFFECT_ADD_FARSIGHT) && holder->m_auras[i])
                 {
                     foundAura = true;
@@ -209,7 +212,7 @@ void DynamicObject::Delay(int32 delaytime)
     }
 }
 
-bool DynamicObject::isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const
+bool DynamicObject::IsVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const
 {
     if (!IsInWorld() || !u->IsInWorld())
     {

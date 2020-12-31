@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,6 +101,105 @@ void CreatureEventAIMgr::CheckUnusedAITexts()
     }
 }
 
+// -------------------
+void CreatureEventAIMgr::LoadCreatureEventAI_Summons(bool check_entry_use)
+{
+    // Drop Existing EventSummon Map
+    m_CreatureEventAI_Summon_Map.clear();
+
+    // Gather additional data for EventAI
+    QueryResult* result = WorldDatabase.Query("SELECT `id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs` FROM `creature_ai_summons`");
+    if (result)
+    {
+        BarGoLink bar(result->GetRowCount());
+        uint32 Count = 0;
+
+        do
+        {
+            bar.step();
+            Field* fields = result->Fetch();
+
+            CreatureEventAI_Summon temp;
+
+            temp.id             = fields[0].GetUInt32();
+            temp.position_x     = fields[1].GetFloat();
+            temp.position_y     = fields[2].GetFloat();
+            temp.position_z     = fields[3].GetFloat();
+            temp.orientation    = fields[4].GetFloat();
+            temp.SpawnTimeSecs  = fields[5].GetUInt32();
+
+            if (!MaNGOS::IsValidMapCoord(temp.position_x, temp.position_y, temp.position_z, temp.orientation))
+            {
+                sLog.outErrorEventAI("Summon id %u have wrong coordinates (%f, %f, %f, %f), skipping.", temp.id, temp.position_x, temp.position_y, temp.position_z, temp.orientation);
+                continue;
+            }
+
+            // Add to map
+            m_CreatureEventAI_Summon_Map[temp.id] = temp;
+            ++Count;
+        }
+        while (result->NextRow());
+
+        delete result;
+
+        if (check_entry_use)
+        {
+            CheckUnusedAISummons();
+        }
+
+        sLog.outString(">> Loaded %u CreatureEventAI summon definitions", Count);
+        sLog.outString();
+    }
+    else
+    {
+        BarGoLink bar(1);
+        bar.step();
+        sLog.outString(">> Loaded 0 CreatureEventAI Summon definitions. DB table `creature_ai_summons` is empty.");
+        sLog.outString();
+    }
+}
+
+void CreatureEventAIMgr::CheckUnusedAISummons()
+{
+    std::set<int32> idx_set;
+    // check not used strings this is negative range
+    for (CreatureEventAI_Summon_Map::const_iterator itr = m_CreatureEventAI_Summon_Map.begin(); itr != m_CreatureEventAI_Summon_Map.end(); ++itr)
+    {
+        idx_set.insert(itr->first);
+    }
+
+    for (CreatureEventAI_Event_Map::const_iterator itr = m_CreatureEventAI_Event_Map.begin(); itr != m_CreatureEventAI_Event_Map.end(); ++itr)
+    {
+        for (size_t i = 0; i < itr->second.size(); ++i)
+        {
+            CreatureEventAI_Event const& event = itr->second[i];
+
+            for (int j = 0; j < MAX_ACTIONS; ++j)
+            {
+                CreatureEventAI_Action const& action = event.action[j];
+                switch (action.type)
+                {
+                    case ACTION_T_SUMMON_ID:
+//                    case ACTION_T_SUMMON_UNIQUE:
+                    {
+                        if (action.summon_id.spawnId)
+                        {
+                            idx_set.erase(action.summon_id.spawnId);
+                        }
+                        break;
+                    }
+                    default: break;
+                }
+            }
+        }
+    }
+
+    for (std::set<int32>::const_iterator itr = idx_set.begin(); itr != idx_set.end(); ++itr)
+    {
+        sLog.outErrorEventAI("Entry %i in table `creature_ai_summons` but not used in EventAI scripts.", *itr);
+    }
+}
+
 /// Helper function to check if a target-type is suitable for the event-type
 bool IsValidTargetType(EventAI_Type eventType, EventAI_ActionType actionType, uint32 targetType, uint32 eventId, uint8 action)
 {
@@ -167,100 +266,6 @@ bool IsValidTargetType(EventAI_Type eventType, EventAI_ActionType actionType, ui
         default:
             sLog.outErrorEventAI("Event %u Action%u uses incorrect Target type", eventId, action);
             return false;
-    }
-}
-
-// -------------------
-void CreatureEventAIMgr::LoadCreatureEventAI_Summons(bool check_entry_use)
-{
-    // Drop Existing EventSummon Map
-    m_CreatureEventAI_Summon_Map.clear();
-
-    // Gather additional data for EventAI
-    QueryResult* result = WorldDatabase.Query("SELECT `id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs` FROM `creature_ai_summons`");
-    if (result)
-    {
-        BarGoLink bar(result->GetRowCount());
-        uint32 Count = 0;
-
-        do
-        {
-            bar.step();
-            Field* fields = result->Fetch();
-
-            CreatureEventAI_Summon temp;
-
-            temp.id             = fields[0].GetUInt32();
-            temp.position_x     = fields[1].GetFloat();
-            temp.position_y     = fields[2].GetFloat();
-            temp.position_z     = fields[3].GetFloat();
-            temp.orientation    = fields[4].GetFloat();
-            temp.SpawnTimeSecs  = fields[5].GetUInt32();
-
-            if (!MaNGOS::IsValidMapCoord(temp.position_x, temp.position_y, temp.position_z, temp.orientation))
-            {
-                sLog.outErrorEventAI("Summon id %u have wrong coordinates (%f, %f, %f, %f), skipping.", temp.id, temp.position_x, temp.position_y, temp.position_z, temp.orientation);
-                continue;
-            }
-
-            // Add to map
-            m_CreatureEventAI_Summon_Map[temp.id] = temp;
-            ++Count;
-        }
-        while (result->NextRow());
-
-        delete result;
-
-        if (check_entry_use)
-            CheckUnusedAISummons();
-
-        sLog.outString();
-        sLog.outString(">> Loaded %u CreatureEventAI summon definitions", Count);
-    }
-    else
-    {
-        BarGoLink bar(1);
-        bar.step();
-        sLog.outString();
-        sLog.outString(">> Loaded 0 CreatureEventAI Summon definitions. DB table `creature_ai_summons` is empty.");
-    }
-}
-
-void CreatureEventAIMgr::CheckUnusedAISummons()
-{
-    std::set<int32> idx_set;
-    // check not used strings this is negative range
-    for (CreatureEventAI_Summon_Map::const_iterator itr = m_CreatureEventAI_Summon_Map.begin(); itr != m_CreatureEventAI_Summon_Map.end(); ++itr)
-    {
-        idx_set.insert(itr->first);
-    }
-
-    for (CreatureEventAI_Event_Map::const_iterator itr = m_CreatureEventAI_Event_Map.begin(); itr != m_CreatureEventAI_Event_Map.end(); ++itr)
-    {
-        for (size_t i = 0; i < itr->second.size(); ++i)
-        {
-            CreatureEventAI_Event const& event = itr->second[i];
-
-            for (int j = 0; j < MAX_ACTIONS; ++j)
-            {
-                CreatureEventAI_Action const& action = event.action[j];
-                switch (action.type)
-                {
-                    case ACTION_T_SUMMON_ID:
-                    {
-                        if (action.summon_id.spawnId)
-                            idx_set.erase(action.summon_id.spawnId);
-                        break;
-                    }
-                    default: break;
-                }
-            }
-        }
-    }
-
-    for (std::set<int32>::const_iterator itr = idx_set.begin(); itr != idx_set.end(); ++itr)
-    {
-        sLog.outErrorEventAI("Entry %i in table `creature_ai_summons` but not used in EventAI scripts.", *itr);
     }
 }
 
@@ -729,7 +734,9 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                             {
                                 // output as debug for now, also because there's no general rule all spells have RecoveryTime
                                 if (temp.event_param3 < spell->RecoveryTime)
+                                {
                                     DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "CreatureEventAI:  Event %u Action %u uses SpellID %u but cooldown is longer(%u) than minumum defined in event param3(%u).", i, j+1,action.cast.spellId, spell->RecoveryTime, temp.event_param3);
+                                }
                             }
                         }
                         */
@@ -757,12 +764,16 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                             if (action.cast.target == TARGET_T_ACTION_INVOKER &&
                                     (IsSpellHaveEffect(spell, SPELL_EFFECT_QUEST_COMPLETE) || IsSpellHaveEffect(spell, SPELL_EFFECT_CREATE_RANDOM_ITEM) || IsSpellHaveEffect(spell, SPELL_EFFECT_DUMMY)
                                      || IsSpellHaveEffect(spell, SPELL_EFFECT_KILL_CREDIT_PERSONAL) || IsSpellHaveEffect(spell, SPELL_EFFECT_KILL_CREDIT_GROUP)))
-                                { sLog.outErrorEventAI("Event %u Action %u has TARGET_T_ACTION_INVOKER(%u) target type, but should have TARGET_T_ACTION_INVOKER_OWNER(%u).", i, j + 1, TARGET_T_ACTION_INVOKER, TARGET_T_ACTION_INVOKER_OWNER); }
+                            {
+                                sLog.outErrorEventAI("Event %u Action %u has TARGET_T_ACTION_INVOKER(%u) target type, but should have TARGET_T_ACTION_INVOKER_OWNER(%u).", i, j + 1, TARGET_T_ACTION_INVOKER, TARGET_T_ACTION_INVOKER_OWNER);
+                            }
 
                             // Spell that should only target players, but could get any
                             if (spell->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER) &&
                                 (action.cast.target == TARGET_T_ACTION_INVOKER || action.cast.target == TARGET_T_HOSTILE_RANDOM || action.cast.target == TARGET_T_HOSTILE_RANDOM_NOT_TOP))
-                                { sLog.outErrorEventAI("Event %u Action %u uses Target type %u for a spell (%u) that should only target players. This could be wrong.", i, j + 1, action.cast.target, action.cast.spellId); }
+                            {
+                                sLog.outErrorEventAI("Event %u Action %u uses Target type %u for a spell (%u) that should only target players. This could be wrong.", i, j + 1, action.cast.target, action.cast.spellId);
+                            }
                         }
                         break;
                     }
@@ -920,7 +931,9 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                         break;
                     case ACTION_T_SET_INST_DATA:
                         if (!(temp.event_flags & EFLAG_DIFFICULTY_ALL))
+                        {
                             sLog.outErrorEventAI("Event %u Action %u. Cannot set instance data without difficulty event flags.", i, j + 1);
+                        }
                         if (action.set_inst_data.value > 4/*SPECIAL*/)
                         {
                             sLog.outErrorEventAI("Event %u Action %u attempts to set instance data above encounter state 4. Custom case?", i, j + 1);
@@ -928,7 +941,9 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                         break;
                     case ACTION_T_SET_INST_DATA64:
                         if (!(temp.event_flags & EFLAG_DIFFICULTY_ALL))
+                        {
                             sLog.outErrorEventAI("Event %u Action %u. Cannot set instance data without difficulty event flags.", i, j + 1);
+                        }
                         IsValidTargetType(temp.event_type, action.type, action.set_inst_data64.target, i, j + 1);
                         break;
                     case ACTION_T_UPDATE_TEMPLATE:
@@ -1028,6 +1043,18 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
                             continue;
                         }
                         break;
+
+                    //case ACTION_T_SUMMON_UNIQUE:                                          //47
+                    //    if (!sCreatureStorage.LookupEntry<CreatureInfo>(action.summon_unique.creatureId))
+                    //    {
+                    //        sLog.outErrorEventAI("Event %u Action %u uses nonexistent creature entry %u.", i, j + 1, action.summon_unique.creatureId);
+                    //    }
+                    //    IsValidTargetType(temp.event_type, action.type, action.summon_unique.target, i, j + 1);
+                    //    if (m_CreatureEventAI_Summon_Map.find(action.summon_unique.spawnId) == m_CreatureEventAI_Summon_Map.end())
+                    //    {
+                    //        sLog.outErrorEventAI("Event %u Action %u summons missing CreatureEventAI_Summon %u", i, j + 1, action.summon_unique.spawnId);
+                    //    }
+                    //    break;
                     case ACTION_T_CHANGE_MOVEMENT:
                         if (action.changeMovement.movementType >= MAX_DB_MOTION_TYPE)
                         {
@@ -1072,14 +1099,14 @@ void CreatureEventAIMgr::LoadCreatureEventAI_Scripts()
         CheckUnusedAITexts();
         CheckUnusedAISummons();
 
-        sLog.outString();
         sLog.outString(">> Loaded %u CreatureEventAI scripts", Count);
+        sLog.outString();
     }
     else
     {
         BarGoLink bar(1);
         bar.step();
-        sLog.outString();
         sLog.outString(">> Loaded 0 CreatureEventAI scripts. DB table `creature_ai_scripts` is empty.");
+        sLog.outString();
     }
 }

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +27,6 @@
 
 #include "Common/Common.h"
 #include "Policies/Singleton.h"
-
-#include <mutex>
 
 class Config;
 class ByteBuffer;
@@ -158,7 +156,9 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
 
 #ifdef ENABLE_ELUNA
             if (elunaErrLogfile != NULL)
+            {
                 fclose(elunaErrLogfile);
+            }
             elunaErrLogfile = NULL;
 #endif /* ENABLE_ELUNA */
 
@@ -458,6 +458,7 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
 #ifdef ENABLE_ELUNA
         FILE* elunaErrLogfile; /**< TODO */
 #endif /* ENABLE_ELUNA */
+
         FILE* eventAiErLogfile; /**< TODO */
         FILE* scriptErrLogFile; /**< TODO */
         FILE* worldLogfile; /**< TODO */
@@ -488,51 +489,72 @@ class Log : public MaNGOS::Singleton<Log, MaNGOS::ClassLevelLockable<Log, ACE_Th
 #define sLog MaNGOS::Singleton<Log>::Instance()
 
 #define BASIC_LOG(...)                                  \
-    do {                                                \
+    do                                                  \
+    {                                                   \
         if (sLog.HasLogLevelOrHigher(LOG_LVL_BASIC))    \
+        {                                               \
             sLog.outBasic(__VA_ARGS__);                 \
+        }                                               \
     } while(0)
 
 #define BASIC_FILTER_LOG(F,...)                         \
-    do {                                                \
+    do                                                  \
+    {                                                   \
         if (sLog.HasLogLevelOrHigher(LOG_LVL_BASIC) && !sLog.HasLogFilter(F)) \
+        {                                               \
             sLog.outBasic(__VA_ARGS__);                 \
+        }                                               \
     } while(0)
 
 #define DETAIL_LOG(...)                                 \
-    do {                                                \
+    do                                                  \
+    {                                                   \
         if (sLog.HasLogLevelOrHigher(LOG_LVL_DETAIL))   \
+        {                                               \
             sLog.outDetail(__VA_ARGS__);                \
-    } while(0)
+        }                                               \
+    }                                                   \
+    while(0)
 
 #define DETAIL_FILTER_LOG(F,...)                        \
-    do {                                                \
+    do                                                  \
+    {                                                   \
         if (sLog.HasLogLevelOrHigher(LOG_LVL_DETAIL) && !sLog.HasLogFilter(F)) \
+        {                                               \
             sLog.outDetail(__VA_ARGS__);                \
-    } while(0)
+        }                                               \
+    }                                                   \
+    while(0)
 
-#ifdef MANGOS_DEBUG
- #define DEBUG_LOG(...)                                 \
-    do {                                                \
+#define DEBUG_LOG(...)                                  \
+    do                                                  \
+    {                                                   \
         if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG))    \
+        {                                               \
             sLog.outDebug(__VA_ARGS__);                 \
-    } while(0)
+        }                                               \
+    }                                                   \
+    while(0)
 
- #define DEBUG_FILTER_LOG(F,...)                        \
-    do {                                                \
+#define DEBUG_FILTER_LOG(F,...)                         \
+    do                                                  \
+    {                                                   \
         if (sLog.HasLogLevelOrHigher(LOG_LVL_DEBUG) && !sLog.HasLogFilter(F)) \
+        {                                               \
             sLog.outDebug(__VA_ARGS__);                 \
-    } while(0)
-#else
- #define DEBUG_LOG(...)
- #define DEBUG_FILTER_LOG(F,...)
-#endif
+        }                                               \
+    }                                                   \
+    while(0)
 
 #define ERROR_DB_FILTER_LOG(F,...)                      \
-    do {                                                \
+    do                                                  \
+    {                                                   \
         if (!sLog.HasLogFilter(F))                      \
+        {                                               \
             sLog.outErrorDb(__VA_ARGS__);               \
-    } while(0)
+        }                                               \
+    }                                                   \
+    while(0)
 
 #define ERROR_DB_STRICT_LOG(...) \
     ERROR_DB_FILTER_LOG(LOG_FILTER_DB_STRICTED_CHECK, __VA_ARGS__)

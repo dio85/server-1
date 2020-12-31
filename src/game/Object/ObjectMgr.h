@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
  * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
-#ifndef _OBJECTMGR_H
-#define _OBJECTMGR_H
+#ifndef MANGOS_H_OBJECTMGR
+#define MANGOS_H_OBJECTMGR
 
 #include "Common.h"
 #include "Log.h"
@@ -772,8 +772,8 @@ class ObjectMgr
 
         // Static wrappers for various accessors
         static GameObjectInfo const* GetGameObjectInfo(uint32 id);                  ///< Wrapper for sGOStorage.LookupEntry
-        static Player* GetPlayer(const char* name);         ///< Wrapper for ObjectAccessor::FindPlayerByName
-        static Player* GetPlayer(ObjectGuid guid, bool inWorld = true);             ///< Wrapper for ObjectAccessor::FindPlayer
+        static Player* GetPlayer(const char* name);         ///< Wrapper for sObjectAccessor.FindPlayerByName
+        static Player* GetPlayer(ObjectGuid guid, bool inWorld = true);             ///< Wrapper for sObjectAccessor.FindPlayer
         static CreatureInfo const* GetCreatureTemplate(uint32 id);                  ///< Wrapper for sCreatureStorage.LookupEntry
         static CreatureModelInfo const* GetCreatureModelInfo(uint32 modelid);       ///< Wrapper for sCreatureModelStorage.LookupEntry
         static EquipmentInfo const* GetEquipmentInfo(uint32 entry);                 ///< Wrapper for sEquipmentStorage.LookupEntry
@@ -1271,7 +1271,9 @@ class ObjectMgr
         static inline void GetLocaleString(const StringVector& data, int loc_idx, std::string& value)
         {
             if (data.size() > size_t(loc_idx) && !data[loc_idx].empty())
+            {
                 value = data[loc_idx];
+            }
         }
 
         int GetOrNewIndexForLocale(LocaleConstant loc);
@@ -1371,7 +1373,9 @@ class ObjectMgr
             for (HotfixData::const_iterator itr = m_hotfixData.begin(); itr != m_hotfixData.end(); ++itr)
                 if (itr->Entry == entry && itr->Type == type)
                     if (itr->Timestamp > ret)
+                    {
                         ret = itr->Timestamp;
+                    }
 
             return ret ? ret : uint32(time(NULL));
         }

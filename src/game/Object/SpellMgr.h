@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
  * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
-#ifndef _SPELLMGR_H
-#define _SPELLMGR_H
+#ifndef MANGOS_H_SPELLMGR
+#define MANGOS_H_SPELLMGR
 
 // For static or at-server-startup loaded spell data
 // For more high level function for sSpellStore data
@@ -371,7 +371,9 @@ inline bool IsSpellWithCasterSourceTargetsOnly(SpellEntry const* spellInfo)
     {
         SpellEffectEntry const* effectEntry = spellInfo->GetSpellEffect(SpellEffectIndex(i));
         if(!effectEntry)
+        {
             continue;
+        }
 
         uint32 targetA = effectEntry->EffectImplicitTargetA;
         if(targetA && !IsCasterSourceTarget(targetA))
@@ -504,7 +506,9 @@ inline bool HasAreaAuraEffect(SpellEntry const* spellInfo)
     {
         SpellEffectEntry const* effectEntry = spellInfo->GetSpellEffect(SpellEffectIndex(i));
         if(!effectEntry)
+        {
             continue;
+        }
         if (IsAreaAuraEffect(effectEntry->Effect))
         {
             return true;
@@ -519,7 +523,9 @@ inline bool HasAuraWithTriggerEffect(SpellEntry const* spellInfo)
     {
         SpellEffectEntry const* effectEntry = spellInfo->GetSpellEffect(SpellEffectIndex(i));
         if(!effectEntry)
+        {
             continue;
+        }
 
         switch(effectEntry->Effect)
         {
@@ -539,7 +545,9 @@ inline bool IsOnlySelfTargeting(SpellEntry const* spellInfo)
     {
         SpellEffectEntry const* effectEntry = spellInfo->GetSpellEffect(SpellEffectIndex(i));
         if(!effectEntry)
+        {
             continue;
+        }
 
         switch (effectEntry->EffectImplicitTargetA)
         {
@@ -626,19 +634,27 @@ inline uint32 GetSpellMechanicMask(SpellEntry const* spellInfo, uint32 effectMas
     uint32 mask = 0;
 
     if (uint32 mech = spellInfo->GetMechanic())
+    {
         mask |= 1 << (mech - 1);
+    }
 
     for (uint32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         if (!(effectMask & (1 << i)))
+        {
             continue;
+        }
 
         SpellEffectEntry const* effectEntry = spellInfo->GetSpellEffect(SpellEffectIndex(i));
         if (!effectEntry)
+        {
             continue;
+        }
 
         if (effectEntry->EffectMechanic)
+        {
             mask |= 1 << (effectEntry->EffectMechanic - 1);
+        }
     }
 
     return mask;
@@ -649,13 +665,17 @@ inline uint32 GetAllSpellMechanicMask(SpellEntry const* spellInfo)
     SpellCategoriesEntry const* spellCategory = spellInfo->GetSpellCategories();
     uint32 mask = 0;
     if (spellCategory && spellCategory->Mechanic)
+    {
         mask |= 1 << (spellCategory->Mechanic - 1);
+    }
 
     for (int i=0; i< MAX_EFFECT_INDEX; ++i)
     {
         SpellEffectEntry const* effectEntry = spellInfo->GetSpellEffect(SpellEffectIndex(i));
         if (effectEntry && effectEntry->EffectMechanic)
+        {
             mask |= 1 << (effectEntry->EffectMechanic-1);
+        }
     }
 
     return mask;

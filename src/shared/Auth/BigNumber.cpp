@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -209,12 +209,16 @@ uint8 *BigNumber::AsByteArray(int minSize, bool reverse)
 
     // If we need more bytes than length of BigNumber set the rest to 0
     if (length > GetNumBytes())
+    {
         memset((void*)_array, 0, length);
+    }
 
     BN_bn2bin(_bn, (unsigned char *)_array);
 
     if (reverse)
+    {
         std::reverse(_array, _array + length);
+    }
 
     return _array;
 }

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -275,8 +275,8 @@ class WorldSession
         void SendLfgBootUpdate(LFGBoot const& boot);
 
         void SendPartyResult(PartyOperation operation, const std::string& member, PartyResult res);
-        void SendGuildInvite(Player* player, bool alreadyInGuild = false);
         void SendGroupInvite(Player* player, bool alreadyInGroup = false);
+        void SendGuildInvite(Player* player, bool alreadyInGuild = false);
         void SendAreaTriggerMessage(const char* Text, ...) ATTR_PRINTF(2, 3);
         void SendTransferAborted(uint32 mapid, uint8 reason, uint8 arg = 0);
         void SendSetPhaseShift(uint32 phaseMask, uint16 mapId = 0);
@@ -309,6 +309,7 @@ class WorldSession
             _player = plr;
         }
         uint8 Expansion() const { return m_expansion; }
+
         // Warden
         void InitWarden(uint16 build, BigNumber* k, std::string const& os);
 

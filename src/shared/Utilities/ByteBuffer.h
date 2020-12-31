@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -217,7 +217,9 @@ class ByteBuffer
         {
             --_bitpos;
             if (bit)
+            {
                 _curbitval |= (1 << (_bitpos));
+            }
 
             if (_bitpos == 0)
             {
@@ -254,7 +256,9 @@ class ByteBuffer
             uint32 value = 0;
             for (int32 i = bits-1; i >= 0; --i)
                 if (ReadBit())
+                {
                     value |= (1 << i);
+                }
 
             return value;
         }
@@ -285,7 +289,9 @@ class ByteBuffer
 
             for (uint8 i = 0; i < byteCount; i++)
                 if (guidByte[byteOrder[i + bytePos]])
+                {
                     (*this) << uint8(guidByte[byteOrder[i + bytePos]] ^ 1);
+                }
         }
 
         template<BITS_1>
@@ -676,14 +682,18 @@ class ByteBuffer
         uint8& operator[](size_t const pos)
         {
             if (pos >= size())
+            {
                 throw ByteBufferException(false, pos, 1, size());
+            }
             return _storage[pos];
         }
 
         uint8 const& operator[](size_t const pos) const
         {
             if (pos >= size())
+            {
                 throw ByteBufferException(false, pos, 1, size());
+            }
             return _storage[pos];
         }
 

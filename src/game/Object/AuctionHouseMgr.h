@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,8 @@
 #define MANGOS_H_AUCTION_HOUSE_MGR
 
 #include "Common.h"
+#include "SharedDefines.h"
+#include "Policies/Singleton.h"
 #include "DBCStructure.h"
 
 /** \addtogroup auctionhouse
@@ -158,6 +160,7 @@ class AuctionHouseObject
         void BuildListPendingSales(WorldPacket& data, Player* player, uint32& count);
 
         AuctionEntry* AddAuction(AuctionHouseEntry const* auctionHouseEntry, Item* newItem, uint32 etime, uint64 bid, uint64 buyout = 0, uint64 deposit = 0, Player* pl = NULL);
+        AuctionEntry* AddAuctionByGuid(AuctionHouseEntry const* auctionHouseEntry, Item* newItem, uint32 etime, uint32 bid, uint32 buyout, uint32 lowguid);
     private:
         AuctionEntryMap AuctionsMap;
 };

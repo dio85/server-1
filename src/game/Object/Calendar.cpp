@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
  */
 
 #include "Calendar.h"
+#include "Guild.h"
 #include "Mail.h"
 #include "ObjectMgr.h"
 #include "ProgressBar.h"
@@ -80,7 +81,9 @@ void CalendarEvent::RemoveInviteByItr(CalendarInviteMap::iterator inviteItr)
     MANGOS_ASSERT(inviteItr != m_Invitee.end());    // iterator must be valid
 
     if (!IsGuildEvent())
+    {
         sCalendarMgr.SendCalendarEventInviteRemoveAlert(sObjectMgr.GetPlayer(inviteItr->second->InviteeGuid), this, CALENDAR_STATUS_REMOVED);
+    }
 
     sCalendarMgr.SendCalendarEventInviteRemove(inviteItr->second, Flags);
 
@@ -97,9 +100,13 @@ void CalendarEvent::RemoveInviteByGuid(ObjectGuid const& playerGuid)
     while (itr != m_Invitee.end())
     {
         if (itr->second->InviteeGuid == playerGuid)
+        {
             RemoveInviteByItr(itr++);
+        }
         else
+        {
             ++itr;
+        }
     }
 }
 
@@ -175,7 +182,9 @@ void CalendarEvent::RemoveAllInvite(ObjectGuid const& removerGuid)
     while (itr != m_Invitee.end())
     {
         if (removerGuid != itr->second->InviteeGuid)
+        {
             draft.SendMailTo(MailReceiver(itr->second->InviteeGuid), this, MAIL_CHECK_MASK_COPIED);
+        }
         RemoveInviteByItr(itr++);
     }
 }
@@ -189,7 +198,9 @@ CalendarInvite::CalendarInvite(CalendarEvent* event, uint64 inviteId, ObjectGuid
 {
     // only for pre invite case
     if (!event)
+    {
         InviteId = 0;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -202,9 +213,13 @@ void CalendarMgr::GetPlayerEventsList(ObjectGuid const& guid, CalendarEventsList
     uint32 guildId = 0;
     Player* player = sObjectMgr.GetPlayer(guid);
     if (player)
+    {
         guildId = player->GetGuildId();
+    }
     else
+    {
         guildId = Player::GetGuildIdFromDB(guid);
+    }
 
     for (CalendarEventStore::iterator itr = m_EventStore.begin(); itr != m_EventStore.end(); ++itr)
     {
@@ -219,7 +234,9 @@ void CalendarMgr::GetPlayerEventsList(ObjectGuid const& guid, CalendarEventsList
 
         // add all event where player is invited
         if (event->GetInviteByGuid(guid))
+        {
             calEventList.push_back(event);
+        }
     }
 }
 
@@ -231,7 +248,9 @@ void CalendarMgr::GetPlayerInvitesList(ObjectGuid const& guid, CalendarInvitesLi
         CalendarEvent* event = &itr->second;
 
         if (event->IsGuildAnnouncement())
+        {
             continue;
+        }
 
         CalendarInviteMap const* cInvMap = event->GetInviteMap();
         CalendarInviteMap::const_iterator ci_itr = cInvMap->begin();
@@ -391,10 +410,14 @@ CalendarInvite* CalendarMgr::AddInvite(CalendarEvent* event, ObjectGuid const& s
     CalendarInvite* invite = new CalendarInvite(event, GetNewInviteId(), senderGuid, inviteeGuid, statusTime, status, rank, text);
 
     if (!event->IsGuildAnnouncement())
+    {
         SendCalendarEventInvite(invite);
+    }
 
     if (!event->IsGuildEvent() || invite->InviteeGuid == event->CreatorGuid)
+    {
         SendCalendarEventInviteAlert(invite);
+    }
 
     if (event->IsGuildAnnouncement())
     {
@@ -457,16 +480,22 @@ uint32 CalendarMgr::GetPlayerNumPending(ObjectGuid const& guid)
         {
             // pass all passed events
             if (event->EventTime < currTime)
+            {
                 continue;
+            }
 
             // pass all locked events
             if (event->Flags & CALENDAR_FLAG_INVITES_LOCKED)
+            {
                 continue;
+            }
         }
 
         // add only invite that require some action
         if ((*itr)->Status == CALENDAR_STATUS_INVITED || (*itr)->Status == CALENDAR_STATUS_TENTATIVE || (*itr)->Status == CALENDAR_STATUS_NOT_SIGNED_UP)
+        {
             ++pendingNum;
+        }
     }
 
     return pendingNum;
@@ -492,7 +521,9 @@ void CalendarMgr::CopyEvent(uint64 eventId, time_t newTime, ObjectGuid const& gu
     }
 
     if (newEvent->IsGuildAnnouncement())
+    {
         AddInvite(newEvent, guid, guid,  CALENDAR_STATUS_CONFIRMED, CALENDAR_RANK_OWNER, "", time(NULL));
+    }
     else
     {
         // copy all invitees, set new owner as the one who make the copy, set invitees status to invited
@@ -511,7 +542,9 @@ void CalendarMgr::CopyEvent(uint64 eventId, time_t newTime, ObjectGuid const& gu
                 CalendarModerationRank rank = CALENDAR_RANK_PLAYER;
                 // copy moderator rank
                 if (invite->Rank == CALENDAR_RANK_MODERATOR)
+                {
                     rank = CALENDAR_RANK_MODERATOR;
+                }
 
                 AddInvite(newEvent, guid, invite->InviteeGuid, CALENDAR_STATUS_INVITED, rank, "", time(NULL));
             }
@@ -641,7 +674,9 @@ void CalendarMgr::LoadCalendarsFromDB()
             sLog.outString(">> calendar_invites table is empty, cleared calendar_events table!");
         }
         else
+        {
             sLog.outString(">> calendar_invite table is empty!");
+        }
     }
     else
     {
@@ -653,6 +688,7 @@ void CalendarMgr::LoadCalendarsFromDB()
             do
             {
                 Field* field = invitesQuery->Fetch();
+                bar.step();
 
                 uint64 inviteId             = field[0].GetUInt64();
                 uint64 eventId              = field[1].GetUInt64();
@@ -732,7 +768,9 @@ bool CalendarMgr::CanAddInviteTo(ObjectGuid const& guid)
         CalendarEvent* event = &itr->second;
 
         if (event->IsGuildAnnouncement())
+        {
             continue;
+        }
 
         CalendarInviteMap const* cInvMap = event->GetInviteMap();
         CalendarInviteMap::const_iterator ci_itr = cInvMap->begin();

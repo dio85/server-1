@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -144,11 +144,15 @@ class  SpellAuraHolder
         void SetInUse(bool state)
         {
             if (state)
+            {
                 ++m_in_use;
+            }
             else
             {
                 if (m_in_use)
+                {
                     --m_in_use;
+                }
             }
         }
 
@@ -181,7 +185,9 @@ class  SpellAuraHolder
             m_procCharges = charges;
 
             if (update)
+            {
                 SendAuraUpdate(false);
+            }
         }
         bool DropAuraCharge()                               // return true if last charge dropped
         {
@@ -472,7 +478,9 @@ class  Aura
             m_modifier.periodictime = periodicTime;
 
             if (uint32 maxticks = GetAuraMaxTicks())
+            {
                 m_periodicTick = maxticks - GetAuraDuration() / m_modifier.periodictime;
+            }
         }
 
         bool IsPositive() { return m_positive; }
@@ -484,11 +492,15 @@ class  Aura
         void SetInUse(bool state)
         {
             if (state)
+            {
                 ++m_in_use;
+            }
             else
             {
                 if (m_in_use)
+                {
                     --m_in_use;
+                }
             }
         }
         void ApplyModifier(bool apply, bool Real = false);
@@ -496,7 +508,9 @@ class  Aura
         {
             m_modifier.m_amount = amount;
             if (update)
+            {
                 GetHolder()->SendAuraUpdate(false);
+            }
         }
 
         void UpdateAura(uint32 diff) { SetInUse(true); Update(diff); SetInUse(false); }

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,12 +61,18 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature& creature)
         init.SetWalk(true);
         init.Launch();
         if (roll_chance_i(MOVEMENT_RANDOM_MMGEN_CHANCE_NO_BREAK))
+        {
             i_nextMoveTime.Reset(50);
+        }
         else
+        {
             i_nextMoveTime.Reset(urand(3000, 10000));       // Keep a short wait time
+        }
     }
     else
+    {
         i_nextMoveTime.Reset(50);                           // Retry later
+    }
     return;
 }
 

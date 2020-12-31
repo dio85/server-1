@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -139,7 +139,6 @@ namespace Movement
             bool isFacing() const { return raw() & Mask_Final_Facing;}
 
             uint8 getAnimationId() const { return animId;}
-
             /**
              * @brief
              *
@@ -187,6 +186,7 @@ namespace Movement
             void EnableAnimation(uint8 anim) { raw() = (raw() & ~(Mask_Animations                           | Falling | Trajectory | FallingSlow)) | Animation | (anim & Mask_Animations);}
             void EnableParabolic()           { raw() = (raw() & ~(Mask_Animations                           | Falling | Animation | FallingSlow)) | Trajectory;}
             void EnableFalling()             { raw() = (raw() & ~(Mask_Animations                           | Trajectory | Animation))| Falling;}
+            void EnableFlying()              { raw() = (raw() & ~Catmullrom)                                | Flying; }
             void EnableCatmullRom()          { raw() = (raw() & ~SmoothGroundPath)                          | Catmullrom | UncompressedPath; }
             /**
              * @brief
@@ -242,6 +242,6 @@ namespace Movement
 #else
 #pragma pack(pop)
 #endif
-
 }
-#endif
+
+#endif // MANGOSSERVER_MOVESPLINEFLAG_H

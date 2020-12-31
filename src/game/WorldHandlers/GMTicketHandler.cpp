@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ void WorldSession::SendGMResponse(GMTicket* ticket)
     SendPacket(&data);
 }
 
-void WorldSession::HandleGMTicketGetTicketOpcode(WorldPacket & /*recv_data*/)
+void WorldSession::HandleGMTicketGetTicketOpcode(WorldPacket& /*recv_data*/)
 {
     SendQueryTimeResponse();
 
@@ -74,12 +74,18 @@ void WorldSession::HandleGMTicketGetTicketOpcode(WorldPacket & /*recv_data*/)
     if (ticket)
     {
         if (ticket->HasResponse())
+        {
             SendGMResponse(ticket);
+        }
         else
+        {
             SendGMTicketGetTicket(0x06, ticket);
+        }
     }
     else
+    {
         SendGMTicketGetTicket(0x0A);
+    }
 }
 
 void WorldSession::HandleGMTicketUpdateTextOpcode(WorldPacket& recv_data)
@@ -88,12 +94,17 @@ void WorldSession::HandleGMTicketUpdateTextOpcode(WorldPacket& recv_data)
     recv_data >> ticketText;
 
     if (GMTicket* ticket = sTicketMgr.GetGMTicket(GetPlayer()->GetObjectGuid()))
+    {
         ticket->SetText(ticketText.c_str());
+    }
     else
+    {
         sLog.outError("Ticket update: Player %s (GUID: %u) doesn't have active ticket", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow());
+    }
+
 }
 
-void WorldSession::HandleGMTicketDeleteTicketOpcode(WorldPacket & /*recv_data*/)
+void WorldSession::HandleGMTicketDeleteTicketOpcode(WorldPacket& /*recv_data*/)
 {
     sTicketMgr.Delete(GetPlayer()->GetObjectGuid());
 
@@ -130,7 +141,9 @@ void WorldSession::HandleGMTicketCreateOpcode(WorldPacket& recv_data)
     }
 
     if (isFollowup)
+    {
         sTicketMgr.Delete(_player->GetObjectGuid());
+    }
 
     sTicketMgr.Create(_player->GetObjectGuid(), ticketText.c_str());
 
@@ -141,15 +154,16 @@ void WorldSession::HandleGMTicketCreateOpcode(WorldPacket& recv_data)
     SendPacket(&data);
 
     // TODO: Guard player map
-    HashMapHolder<Player>::MapType& m = sObjectAccessor.GetPlayers();
-    for (HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
+    sObjectAccessor.DoForAllPlayers([this](Player* p)->void
     {
-        if (itr->second->GetSession()->GetSecurity() >= SEC_GAMEMASTER && itr->second->isAcceptTickets())
-            ChatHandler(itr->second).PSendSysMessage(LANG_COMMAND_TICKETNEW, GetPlayer()->GetName());
-    }
+        if (p->GetSession()->GetSecurity() >= SEC_GAMEMASTER && p->isAcceptTickets())
+        {
+            ChatHandler(p).PSendSysMessage(LANG_COMMAND_TICKETNEW, GetPlayer()->GetName());
+        }
+    });
 }
 
-void WorldSession::HandleGMTicketSystemStatusOpcode(WorldPacket & /*recv_data*/)
+void WorldSession::HandleGMTicketSystemStatusOpcode(WorldPacket& /*recv_data*/)
 {
     WorldPacket data(SMSG_GMTICKET_SYSTEMSTATUS, 4);
     data << uint32(1);                                      // we can also disable ticket system by sending 0 value
@@ -171,7 +185,9 @@ void WorldSession::HandleGMSurveySubmitOpcode(WorldPacket& recv_data)
         uint32 questionID;
         recv_data >> questionID;                            // GMSurveyQuestions.dbc
         if (!questionID)
+        {
             break;
+        }
 
         uint8 value;
         std::string unk_text;

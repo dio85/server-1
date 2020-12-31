@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -208,7 +208,9 @@ void TemporarySummon::Update(uint32 update_diff,  uint32 diff)
                 Unit* owner = GetCharmerOrOwner();
                 uint32 const& spellId = GetUInt32Value(UNIT_CREATED_BY_SPELL);
                 if (!owner || !spellId || !owner->HasAura(spellId))
+                {
                     UnSummon();
+                }
             }
             break;
 
@@ -248,21 +250,29 @@ void TemporarySummon::UnSummon()
     CombatStop();
 
     if (m_linkedToOwnerAura & TEMPSUMMON_LINKED_AURA_REMOVE_OWNER)
+    {
         RemoveAuraFromOwner();
+    }
 
     if (GetSummonerGuid().IsCreatureOrVehicle())
     {
         if (Creature* sum = GetMap()->GetCreature(GetSummonerGuid()))
             if (sum->AI())
+            {
                 sum->AI()->SummonedCreatureDespawn(this);
+            }
     }
     else if (GetSummonerGuid().IsPlayer()) // if player that summoned this creature was MCing it, uncharm
         if (Player* player = GetMap()->GetPlayer(GetSummonerGuid()))
             if (player->GetMover() == this)
+            {
                 player->Uncharm();
+            }
 
     if (AI())
+    {
         AI()->SummonedCreatureDespawn(this);
+    }
 
     AddObjectToRemoveList();
 }

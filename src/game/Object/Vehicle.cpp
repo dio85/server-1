@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,9 @@
 #include "movement/MoveSpline.h"
 #include "MapManager.h"
 #include "TemporarySummon.h"
+#ifdef ENABLE_ELUNA
+#include "LuaEngine.h"
+#endif /*ENABLE_ELUNA*/
 
 void ObjectMgr::LoadVehicleAccessory()
 {
@@ -113,10 +116,14 @@ VehicleInfo::VehicleInfo(Unit* owner, VehicleEntry const* vehicleEntry, uint32 o
                 m_vehicleSeats.insert(VehicleSeatMap::value_type(i, seatEntry));
 
                 if (IsUsableSeatForCreature(seatEntry->m_flags))
+                {
                     m_creatureSeats |= 1 << i;
+                }
 
                 if (IsUsableSeatForPlayer(seatEntry->m_flags, seatEntry->m_flagsB))
+                {
                     m_playerSeats |= 1 << i;
+                }
             }
         }
     }
@@ -132,7 +139,9 @@ VehicleInfo::~VehicleInfo()
 void VehicleInfo::Initialize()
 {
     if (!m_overwriteNpcEntry)
+    {
         m_overwriteNpcEntry = m_owner->GetEntry();
+    }
 
     // Loading passengers (rough version only!)
     SQLMultiStorage::SQLMSIteratorBounds<VehicleAccessory> bounds = sVehicleAccessoryStorage.getBounds<VehicleAccessory>(m_overwriteNpcEntry);
@@ -144,6 +153,9 @@ void VehicleInfo::Initialize()
             m_accessoryGuids.insert(summoned->GetObjectGuid());
             int32 basepoint0 = itr->seatId + 1;
             summoned->CastCustomSpell((Unit*)m_owner, SPELL_RIDE_VEHICLE_HARDCODED, &basepoint0, NULL, NULL, true);
+#ifdef ENABLE_ELUNA
+            sEluna->OnInstallAccessory(this, summoned);
+#endif
         }
     }
 
@@ -152,27 +164,45 @@ void VehicleInfo::Initialize()
     Unit* pVehicle = (Unit*)m_owner;
 
     if (vehicleFlags & VEHICLE_FLAG_NO_STRAFE)
+    {
         pVehicle->m_movementInfo.AddMovementFlags2(MOVEFLAG2_NO_STRAFE);
+    }
     if (vehicleFlags & VEHICLE_FLAG_NO_JUMPING)
+    {
         pVehicle->m_movementInfo.AddMovementFlags2(MOVEFLAG2_NO_JUMPING);
+    }
     if (vehicleFlags & VEHICLE_FLAG_FULLSPEEDTURNING)
+    {
         pVehicle->m_movementInfo.AddMovementFlags2(MOVEFLAG2_FULLSPEEDTURNING);
+    }
     if (vehicleFlags & VEHICLE_FLAG_ALLOW_PITCHING)
+    {
         pVehicle->m_movementInfo.AddMovementFlags2(MOVEFLAG2_ALLOW_PITCHING);
+    }
     if (vehicleFlags & VEHICLE_FLAG_FULLSPEEDPITCHING)
+    {
         pVehicle->m_movementInfo.AddMovementFlags2(MOVEFLAG2_FULLSPEEDPITCHING);
+    }
 
     if (vehicleFlags & VEHICLE_FLAG_FIXED_POSITION)
+    {
         pVehicle->SetRoot(true);
+    }
 
     // Initialize power type based on DBC values (creatures only)
     if (pVehicle->GetTypeId() == TYPEID_UNIT)
     {
         if (PowerDisplayEntry const* powerEntry = sPowerDisplayStore.LookupEntry(GetVehicleEntry()->m_powerDisplayID))
+        {
             pVehicle->SetPowerType(Powers(powerEntry->power));
+        }
     }
 
     m_isInitialized = true;
+
+#ifdef ENABLE_ELUNA
+    sEluna->OnInstall(this);
+#endif
 }
 
 /*
@@ -237,7 +267,9 @@ void VehicleInfo::Board(Unit* passenger, uint8 seat)
     }
 
     if (!passenger->IsRooted())
+    {
         passenger->SetRoot(true);
+    }
 
     Movement::MoveSplineInit init(*passenger);
     init.MoveTo(0.0f, 0.0f, 0.0f);                          // ToDo: Set correct local coords
@@ -247,6 +279,10 @@ void VehicleInfo::Board(Unit* passenger, uint8 seat)
 
     // Apply passenger modifications
     ApplySeatMods(passenger, seatEntry->m_flags);
+
+#ifdef ENABLE_ELUNA
+    sEluna->OnAddPassenger(this, passenger, seat);
+#endif
 }
 
 /*
@@ -351,7 +387,9 @@ void VehicleInfo::UnBoard(Unit* passenger, bool changeVehicle)
         }
 
         if (passenger->IsRooted())
+        {
             passenger->SetRoot(false);
+        }
 
         Movement::MoveSplineInit init(*passenger);
         // ToDo: Set proper unboard coordinates
@@ -368,6 +406,9 @@ void VehicleInfo::UnBoard(Unit* passenger, bool changeVehicle)
             m_accessoryGuids.erase(passenger->GetObjectGuid());
         }
     }
+#ifdef ENABLE_ELUNA
+    sEluna->OnRemovePassenger(this, passenger);
+#endif
 
     // Some creature vehicles get despawned after passenger unboarding
     if (m_owner->GetTypeId() == TYPEID_UNIT)
@@ -378,7 +419,9 @@ void VehicleInfo::UnBoard(Unit* passenger, bool changeVehicle)
                 !(m_vehicleEntry->m_flags & (VEHICLE_FLAG_UNK4 | VEHICLE_FLAG_UNK20)))
         {
             if (((Creature*)m_owner)->IsTemporarySummon())
+            {
                 ((Creature*)m_owner)->ForcedDespawn(1000);
+            }
         }
     }
 }
@@ -452,7 +495,7 @@ void VehicleInfo::CalculateBoardingPositionOf(float gx, float gy, float gz, floa
     NormalizeRotatedPosition(gx - m_owner->GetPositionX(), gy - m_owner->GetPositionY(), lx, ly);
 
     lz = gz - m_owner->GetPositionZ();
-    lo = NormalizeOrientation(go - m_owner->GetOrientation());
+    lo = MapManager::NormalizeOrientation(go - m_owner->GetOrientation());
 }
 
 void VehicleInfo::RemoveAccessoriesFromMap()
@@ -534,13 +577,13 @@ uint8 VehicleInfo::GetTakenSeatsMask() const
     return takenSeatsMask;
 }
 
-bool VehicleInfo::IsUsableSeatForPlayer(uint32 seatFlags, uint32 seatFlagsB) const
+bool VehicleInfo:: IsUsableSeatForPlayer(uint32 seatFlags, uint32 seatFlagsB) const
 {
     return seatFlags & SEAT_FLAG_CAN_EXIT ||
            seatFlags & SEAT_FLAG_UNCONTROLLED ||
            seatFlagsB &
-           (SEAT_FLAG_B_USABLE_FORCED   | SEAT_FLAG_B_USABLE_FORCED_2 |
-            SEAT_FLAG_B_USABLE_FORCED_3 | SEAT_FLAG_B_USABLE_FORCED_4);
+               (SEAT_FLAG_B_USABLE_FORCED | SEAT_FLAG_B_USABLE_FORCED_2 |
+                SEAT_FLAG_B_USABLE_FORCED_3 | SEAT_FLAG_B_USABLE_FORCED_4);
 }
 
 /// Add control and such modifiers to a passenger if required
@@ -549,7 +592,9 @@ void VehicleInfo::ApplySeatMods(Unit* passenger, uint32 seatFlags)
     Unit* pVehicle = (Unit*)m_owner;                        // Vehicles are alawys Unit
 
     if (seatFlags & SEAT_FLAG_NOT_SELECTABLE)
+    {
         passenger->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+    }
 
     if (passenger->GetTypeId() == TYPEID_PLAYER)
     {
@@ -557,7 +602,9 @@ void VehicleInfo::ApplySeatMods(Unit* passenger, uint32 seatFlags)
 
         // group update
         if (pPlayer->GetGroup())
+        {
             pPlayer->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_VEHICLE_SEAT);
+        }
 
         if (seatFlags & SEAT_FLAG_CAN_CONTROL)
         {
@@ -619,7 +666,9 @@ void VehicleInfo::RemoveSeatMods(Unit* passenger, uint32 seatFlags)
     Unit* pVehicle = (Unit*)m_owner;
 
     if (seatFlags & SEAT_FLAG_NOT_SELECTABLE)
+    {
         passenger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+    }
 
     if (passenger->GetTypeId() == TYPEID_PLAYER)
     {
@@ -627,7 +676,9 @@ void VehicleInfo::RemoveSeatMods(Unit* passenger, uint32 seatFlags)
 
         // group update
         if (pPlayer->GetGroup())
+        {
             pPlayer->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_VEHICLE_SEAT);
+        }
 
         if (seatFlags & SEAT_FLAG_CAN_CONTROL)
         {
@@ -645,11 +696,15 @@ void VehicleInfo::RemoveSeatMods(Unit* passenger, uint32 seatFlags)
 
             // reset vehicle faction
             if (pVehicle->GetTypeId() == TYPEID_UNIT)
+            {
                 ((Creature*)pVehicle)->ClearTemporaryFaction();
+            }
         }
 
         if (seatFlags & SEAT_FLAG_CAN_CAST)
+        {
             pPlayer->RemovePetActionBar();
+        }
     }
     else if (passenger->GetTypeId() == TYPEID_UNIT)
     {
@@ -662,7 +717,9 @@ void VehicleInfo::RemoveSeatMods(Unit* passenger, uint32 seatFlags)
         // Reinitialize movement
         ((Creature*)passenger)->AI()->SetCombatMovement(true, true);
         if (!passenger->getVictim())
+        {
             passenger->GetMotionMaster()->Initialize();
+        }
     }
 }
 

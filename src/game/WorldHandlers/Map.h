@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,6 +78,7 @@ struct InstanceTemplate
     // or 0 (not related to continent 0 map id)
     uint32 levelMin;
     uint32 levelMax;
+    uint32 script_id;
 };
 
 struct WorldTemplate
@@ -259,7 +260,7 @@ class Map : public GridRefManager<NGridType>
         Unit* GetUnit(ObjectGuid guid);                     // only use if sure that need objects at current map, specially for player case
         WorldObject* GetWorldObject(ObjectGuid guid);       // only use if sure that need objects at current map, specially for player case
 
-        typedef TypeUnorderedMapContainer<AllMapStoredObjectTypes, ObjectGuid> MapStoredObjectTypesContainer;
+        using MapStoredObjectTypesContainer = TypeUnorderedMapContainer<ObjectGuid, TypeList<Creature, Pet, GameObject, DynamicObject>> ;
         MapStoredObjectTypesContainer& GetObjectsStore() { return m_objectsStore; }
 
         void AddUpdateObject(Object* obj)
@@ -302,11 +303,6 @@ class Map : public GridRefManager<NGridType>
 
         // Teleport all players in that map to choosed location
         void TeleportAllPlayersTo(TeleportLocation loc);
-        // Random on map generation
-        bool GetReachableRandomPosition(Unit* unit, float& x, float& y, float& z, float radius);
-        bool GetReachableRandomPointOnGround(uint32 phaseMask, float& x, float& y, float& z, float radius);
-        bool GetRandomPointInTheAir(uint32 phaseMask, float& x, float& y, float& z, float radius);
-        bool GetRandomPointUnderWater(uint32 phaseMask, float& x, float& y, float& z, float radius, GridMapLiquidData& liquid_status);
 
         // WeatherSystem
         WeatherSystem* GetWeatherSystem() const { return m_weatherSystem; }
@@ -318,6 +314,11 @@ class Map : public GridRefManager<NGridType>
          */
         void SetWeather(uint32 zoneId, WeatherType type, float grade, bool permanently);
 
+        // Random on map generation
+        bool GetReachableRandomPosition(Unit* unit, float& x, float& y, float& z, float radius);
+        bool GetReachableRandomPointOnGround(uint32 phaseMask, float& x, float& y, float& z, float radius);
+        bool GetRandomPointInTheAir(uint32 phaseMask, float& x, float& y, float& z, float radius);
+        bool GetRandomPointUnderWater(uint32 phaseMask, float& x, float& y, float& z, float radius, GridMapLiquidData& liquid_status);
 
     private:
         void LoadMapAndVMap(int gx, int gy);
@@ -329,7 +330,7 @@ class Map : public GridRefManager<NGridType>
         void SendInitTransports(Player* player);
         void SendRemoveTransports(Player* player);
 
-        bool CreatureCellRelocation(Creature* c, const Cell& new_cell);
+        bool CreatureCellRelocation(Creature* creature, Cell new_cell);
 
         bool loaded(const GridPair&) const;
         void EnsureGridCreated(const GridPair&);
@@ -391,6 +392,7 @@ class Map : public GridRefManager<NGridType>
         ScriptScheduleMap m_scriptSchedule;
 
         InstanceData* i_data;
+        uint32 i_script_id;
 
         // Map local low guid counters
         ObjectGuidGenerator<HIGHGUID_UNIT> m_CreatureGuids;

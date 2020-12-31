@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,9 +92,13 @@ void OutdoorPvP::HandleGameObjectCreate(GameObject* go)
         CapturePointSliderMap const* capturePoints = sOutdoorPvPMgr.GetCapturePointSliderMap();
         CapturePointSliderMap::const_iterator itr = capturePoints->find(go->GetEntry());
         if (itr != capturePoints->end())
+        {
             go->SetCapturePointSlider(itr->second.Value, itr->second.IsLocked);
+        }
         else
+        {
             go->SetCapturePointSlider(CAPTURE_SLIDER_MIDDLE, false);
+        }
     }
 }
 

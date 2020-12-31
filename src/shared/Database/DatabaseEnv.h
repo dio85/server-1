@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,16 +32,6 @@
 #include "Database/Field.h"
 #include "Database/QueryResult.h"
 
-#ifdef DO_POSTGRESQL
-#include "Database/QueryResultPostgre.h"
-#include "Database/Database.h"
-#include "Database/DatabasePostgre.h"
-typedef DatabasePostgre DatabaseType;
-#define _LIKE_           "ILIKE"
-#define _TABLE_SIM_      "\""
-#define _CONCAT3_(A,B,C) "( " A " || " B " || " C " )"
-#define _OFFSET_         "LIMIT 1 OFFSET %d"
-#else
 #include "Database/QueryResultMysql.h"
 #include "Database/Database.h"
 #include "Database/DatabaseMysql.h"
@@ -53,7 +43,6 @@ typedef DatabaseMysql DatabaseType;
 #define _LIKE_           "LIKE"
 #define _CONCAT3_(A,B,C) "CONCAT( " A " , " B " , " C " )"
 #define _OFFSET_         "LIMIT %d,1"
-#endif
 
 extern DatabaseType WorldDatabase; /**< TODO */
 extern DatabaseType CharacterDatabase; /**< TODO */

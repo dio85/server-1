@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,9 @@ void WorldSession::HandleInspectArenaTeamsOpcode(WorldPacket& recv_data)
         if (uint32 a_id = player->GetArenaTeamId(i))
         {
             if (ArenaTeam* arenaTeam = sObjectMgr.GetArenaTeamById(a_id))
+            {
                 arenaTeam->InspectStats(this, player->GetObjectGuid());
+            }
         }
     }
 }
@@ -87,7 +89,9 @@ void WorldSession::HandleArenaTeamRosterOpcode(WorldPacket& recv_data)
     recv_data >> ArenaTeamId;
 
     if (ArenaTeam* arenateam = sObjectMgr.GetArenaTeamById(ArenaTeamId))
+    {
         arenateam->Roster(this);
+    }
 }
 
 void WorldSession::HandleArenaTeamCreateOpcode(WorldPacket& recv_data)
@@ -162,7 +166,7 @@ void WorldSession::HandleArenaTeamInviteOpcode(WorldPacket& recv_data)
             return;
         }
 
-        player = ObjectAccessor::FindPlayerByName(Invitedname.c_str());
+        player = sObjectAccessor.FindPlayerByName(Invitedname.c_str());
     }
 
     if (!player)

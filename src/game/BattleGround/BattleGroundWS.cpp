@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,9 +90,13 @@ void BattleGroundWS::Update(uint32 diff)
         if (m_EndTimer <= diff)
         {
             if (m_TeamScores[TEAM_INDEX_ALLIANCE] > m_TeamScores[TEAM_INDEX_HORDE])
+            {
                 EndBattleGround(ALLIANCE);
+            }
             else if (m_TeamScores[TEAM_INDEX_ALLIANCE] < m_TeamScores[TEAM_INDEX_HORDE])
+            {
                 EndBattleGround(HORDE);
+            }
             else
             {
                 // if 0 => tie
@@ -106,7 +110,9 @@ void BattleGroundWS::Update(uint32 diff)
             uint32 minutesLeft = GetRemainingTimeInMinutes();
 
             if (minutesLeft != minutesLeftPrev)
+            {
                 UpdateWorldState(BG_WS_TIME_REMAINING, minutesLeft);
+            }
         }
     }
 }
@@ -524,9 +530,13 @@ void BattleGroundWS::UpdateFlagState(Team team, uint32 value)
 void BattleGroundWS::UpdateTeamScore(Team team)
 {
     if (team == ALLIANCE)
+    {
         UpdateWorldState(BG_WS_FLAG_CAPTURES_ALLIANCE, m_TeamScores[TEAM_INDEX_ALLIANCE]);
+    }
     else
+    {
         UpdateWorldState(BG_WS_FLAG_CAPTURES_HORDE, m_TeamScores[TEAM_INDEX_HORDE]);
+    }
 }
 
 bool BattleGroundWS::HandleAreaTrigger(Player* source, uint32 trigger)
@@ -592,9 +602,13 @@ void BattleGroundWS::EndBattleGround(Team winner)
 {
     // win reward
     if (winner == ALLIANCE)
+    {
         RewardHonorToTeam(GetBonusHonorFromKill(m_HonorWinKills), ALLIANCE);
+    }
     if (winner == HORDE)
+    {
         RewardHonorToTeam(GetBonusHonorFromKill(m_HonorWinKills), HORDE);
+    }
     // complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(m_HonorEndKills), ALLIANCE);
     RewardHonorToTeam(GetBonusHonorFromKill(m_HonorEndKills), HORDE);

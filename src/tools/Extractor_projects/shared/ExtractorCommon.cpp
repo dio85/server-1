@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,10 +77,14 @@ FILE* openWoWExe()
     {
 #ifdef WIN32
         if (fopen_s(&pFile, ExeFileName[iFileCount], "rb") == 0)
+        {
             return pFile; ///< successfully located the WoW executable
+        }
 #else
         if ((pFile = fopen(ExeFileName[iFileCount], "rb")))
+        {
             return pFile; ///< successfully located the WoW executable
+        }
 #endif
     }
 
@@ -120,7 +124,9 @@ int getBuildNumber()
 
     FILE *pFile;
     if (!(pFile = openWoWExe()))
+    {
         return 0; ///> failed to locate exe file
+    }
 
     /// jump over as much of the file as possible, before we start searching for the base #
     for (int i = 0; i < 3300; i++)

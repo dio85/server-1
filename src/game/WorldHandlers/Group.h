@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -341,7 +341,9 @@ class  Group
                 return;
             }
             if (_setAssistantFlag(guid, state))
+            {
                 SendUpdate();
+            }
         }
         void SetMainTank(ObjectGuid guid)
         {
@@ -351,7 +353,9 @@ class  Group
             }
 
             if (_setMainTank(guid))
+            {
                 SendUpdate();
+            }
         }
         void SetMainAssistant(ObjectGuid guid)
         {
@@ -361,7 +365,9 @@ class  Group
             }
 
             if (_setMainAssistant(guid))
+            {
                 SendUpdate();
+            }
         }
 
         void SetTargetIcon(uint8 id, ObjectGuid whoGuid, ObjectGuid targetGuid);
@@ -432,7 +438,9 @@ class  Group
         {
             // Sub group counters initialization
             if (!m_subGroupsCounts)
+            {
                 m_subGroupsCounts = new uint8[MAX_RAID_SUBGROUPS];
+            }
 
             memset((void*)m_subGroupsCounts, 0, MAX_RAID_SUBGROUPS * sizeof(uint8));
 
@@ -467,13 +475,17 @@ class  Group
         void SubGroupCounterIncrease(uint8 subgroup)
         {
             if (m_subGroupsCounts)
+            {
                 ++m_subGroupsCounts[subgroup];
+            }
         }
 
         void SubGroupCounterDecrease(uint8 subgroup)
         {
             if (m_subGroupsCounts)
+            {
                 --m_subGroupsCounts[subgroup];
+            }
         }
 
         uint32 GetMaxSkillValueForGroup(SkillType skill);
@@ -485,11 +497,17 @@ class  Group
         {
             uint8 flags = 0;
             if (slot.assistant)
+            {
                 flags |= GROUP_ASSISTANT;
+            }
             if (slot.guid == m_mainAssistantGuid)
+            {
                 flags |= GROUP_MAIN_ASSISTANT;
+            }
             if (slot.guid == m_mainTankGuid)
+            {
                 flags |= GROUP_MAIN_TANK;
+            }
             return GroupFlagMask(flags);
         }
 

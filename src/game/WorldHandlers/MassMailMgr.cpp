@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -110,7 +110,9 @@ void MassMailMgr::Update(bool sendall /*= false*/)
                 task.m_protoMail->SendMailTo(MailReceiver(receiver, receiver_guid), task.m_sender, MAIL_CHECK_MASK_RETURNED);
 
                 if (!sendall)
+                {
                     --maxcount;
+                }
                 break;
             }
 
@@ -122,11 +124,15 @@ void MassMailMgr::Update(bool sendall /*= false*/)
             draft.SendMailTo(MailReceiver(receiver, receiver_guid), task.m_sender, MAIL_CHECK_MASK_RETURNED);
 
             if (!sendall)
+            {
                 --maxcount;
+            }
         }
 
         if (task.m_receivers.empty())
+        {
             m_massMails.pop_front();
+        }
     }
     while (!m_massMails.empty() && (sendall || maxcount > 0));
 }

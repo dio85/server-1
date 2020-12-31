@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,44 +43,21 @@ namespace ACE_Based
             LockType _lock; /**< Lock access to the queue. */
             StorageType _queue; /**< Storage backing the queue. */
 
-            /*volatile*/ bool _canceled; /**< Cancellation flag. */
-
         public:
-
-            /**
-             * @brief Create a LockedQueue.
-             *
-             */
-            LockedQueue()
-                : _canceled(false)
+            LockedQueue(): _lock(), _queue()
             {
             }
 
-            /**
-             * @brief Destroy a LockedQueue.
-             *
-             */
             virtual ~LockedQueue()
             {
             }
 
-            /**
-             * @brief Adds an item to the queue.
-             *
-             * @param item
-             */
             void add(const T& item)
             {
-                ACE_Guard<LockType> g(this->_lock);
+                ACE_GUARD (LockType, g, this->_lock);
                 _queue.push_back(item);
             }
 
-            /**
-             * @brief Gets the next result in the queue, if any.
-             *
-             * @param result
-             * @return bool
-             */
             bool next(T& result)
             {
                 ACE_GUARD_RETURN(LockType, g, this->_lock, false);
@@ -97,13 +74,6 @@ namespace ACE_Based
             }
 
             template<class Checker>
-            /**
-             * @brief
-             *
-             * @param result
-             * @param check
-             * @return bool
-             */
             bool next(T& result, Checker& check)
             {
                 ACE_GUARD_RETURN(LockType, g, this->_lock, false);
@@ -123,67 +93,9 @@ namespace ACE_Based
                 return true;
             }
 
-            /**
-             * @brief Peeks at the top of the queue. Remember to unlock after use.
-             *
-             * @return T
-             */
-            T& peek()
-            {
-                lock();
-
-                T& result = _queue.front();
-
-                return result;
-            }
-
-            /**
-             * @brief Cancels the queue.
-             *
-             */
-            void cancel()
-            {
-                ACE_Guard<LockType> g(this->_lock);
-                _canceled = true;
-            }
-
-            /**
-             * @brief Checks if the queue is cancelled.
-             *
-             * @return bool
-             */
-            bool cancelled()
-            {
-                ACE_Guard<LockType> g(this->_lock);
-                return _canceled;
-            }
-
-            /**
-             * @brief Locks the queue for access.
-             *
-             */
-            void lock()
-            {
-                this->_lock.acquire();
-            }
-
-            /**
-             * @brief Unlocks the queue.
-             *
-             */
-            void unlock()
-            {
-                this->_lock.release();
-            }
-
-            /**
-             * @brief Checks if we're empty or not with locks held
-             *
-             * @return bool
-             */
             bool empty()
             {
-                ACE_Guard<LockType> g(this->_lock);
+                ACE_GUARD_RETURN (LockType, g, this->_lock, false);
                 return _queue.empty();
             }
     };

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,14 +43,23 @@ PlayerSocial::~PlayerSocial()
     m_playerSocialMap.clear();
 }
 
+/* Called by PlayerSocial::SendFriendList */
 uint32 PlayerSocial::GetNumberOfSocialsWithFlag(SocialFlag flag)
 {
+    /* This is the value we return
+     * It indicates the number of players that have the flag specified in arg1 */
     uint32 counter = 0;
+
+    /* For each person on our player's social map
+     * This includes both friends and enemies */
     for (PlayerSocialMap::const_iterator itr = m_playerSocialMap.begin(); itr != m_playerSocialMap.end(); ++itr)
     {
         if (itr->second.Flags & flag)
+        {
             ++counter;
+        }
     }
+    /* We've done all the calculations we need to, return the counter */
     return counter;
 }
 
@@ -74,7 +83,9 @@ bool PlayerSocial::AddToSocialList(ObjectGuid friend_guid, bool ignore)
 
     uint32 flag = SOCIAL_FLAG_FRIEND;
     if (ignore)
+    {
         flag = SOCIAL_FLAG_IGNORED;
+    }
 
     PlayerSocialMap::const_iterator itr = m_playerSocialMap.find(friend_guid.GetCounter());
     if (itr != m_playerSocialMap.end())
@@ -102,7 +113,9 @@ void PlayerSocial::RemoveFromSocialList(ObjectGuid friend_guid, bool ignore)
 
     uint32 flag = SOCIAL_FLAG_FRIEND;
     if (ignore)
+    {
         flag = SOCIAL_FLAG_IGNORED;
+    }
 
     itr->second.Flags &= ~flag;
     if (itr->second.Flags == 0)
@@ -205,7 +218,7 @@ void SocialMgr::GetFriendInfo(Player* player, uint32 friend_lowguid, FriendInfo&
         return;
     }
 
-    Player* pFriend = ObjectAccessor::FindPlayer(ObjectGuid(HIGHGUID_PLAYER, friend_lowguid));
+    Player* pFriend = sObjectAccessor.FindPlayer(ObjectGuid(HIGHGUID_PLAYER, friend_lowguid));
 
     Team team = player->GetTeam();
     AccountTypes security = player->GetSession()->GetSecurity();
@@ -214,7 +227,9 @@ void SocialMgr::GetFriendInfo(Player* player, uint32 friend_lowguid, FriendInfo&
 
     PlayerSocialMap::iterator itr = player->GetSocial()->m_playerSocialMap.find(friend_lowguid);
     if (itr != player->GetSocial()->m_playerSocialMap.end())
+    {
         friendInfo.Note = itr->second.Note;
+    }
 
     // PLAYER see his team only and PLAYER can't see MODERATOR, GAME MASTER, ADMINISTRATOR characters
     // MODERATOR, GAME MASTER, ADMINISTRATOR can see all
@@ -225,9 +240,13 @@ void SocialMgr::GetFriendInfo(Player* player, uint32 friend_lowguid, FriendInfo&
     {
         friendInfo.Status = FRIEND_STATUS_ONLINE;
         if (pFriend->isAFK())
+        {
             friendInfo.Status = FRIEND_STATUS_AFK;
+        }
         if (pFriend->isDND())
+        {
             friendInfo.Status = FRIEND_STATUS_DND;
+        }
         friendInfo.Area = pFriend->GetZoneId();
         friendInfo.Level = pFriend->getLevel();
         friendInfo.Class = pFriend->getClass();
@@ -281,9 +300,13 @@ void SocialMgr::SendFriendStatus(Player* player, FriendsResult result, ObjectGui
     }
 
     if (broadcast)
+    {
         BroadcastToFriendListers(player, &data);
+    }
     else
+    {
         player->GetSession()->SendPacket(&data);
+    }
 }
 
 void SocialMgr::BroadcastToFriendListers(Player* player, WorldPacket* packet)
@@ -304,7 +327,7 @@ void SocialMgr::BroadcastToFriendListers(Player* player, WorldPacket* packet)
         PlayerSocialMap::const_iterator itr2 = itr->second.m_playerSocialMap.find(guid);
         if (itr2 != itr->second.m_playerSocialMap.end() && (itr2->second.Flags & SOCIAL_FLAG_FRIEND))
         {
-            Player* pFriend = ObjectAccessor::FindPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first));
+            Player* pFriend = sObjectAccessor.FindPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first));
 
             // PLAYER see his team only and PLAYER can't see MODERATOR, GAME MASTER, ADMINISTRATOR characters
             // MODERATOR, GAME MASTER, ADMINISTRATOR can see all
@@ -345,16 +368,24 @@ PlayerSocial* SocialMgr::LoadFromDB(QueryResult* result, ObjectGuid guid)
         note = fields[2].GetCppString();
 
         if ((flags & SOCIAL_FLAG_IGNORED) && ignoreCounter >= SOCIALMGR_IGNORE_LIMIT)
+        {
             continue;
+        }
         if ((flags & SOCIAL_FLAG_FRIEND) && friendCounter >= SOCIALMGR_FRIEND_LIMIT)
+        {
             continue;
+        }
 
         social->m_playerSocialMap[friend_guid] = FriendInfo(flags, note);
 
         if (flags & SOCIAL_FLAG_IGNORED)
+        {
             ++ignoreCounter;
+        }
         else
+        {
             ++friendCounter;
+        }
     }
     while (result->NextRow());
     delete result;

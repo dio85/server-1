@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -135,12 +135,16 @@ void LoadHelper(CellGuidSet const& guid_set, CellPair& cell, GridRefManager<T>& 
         obj->SetMap(map);
         obj->AddToWorld();
         if (obj->IsActiveObject())
+        {
             map->AddToActive(obj);
+        }
 
         obj->GetViewPoint().Event_AddedToWorld(&grid);
 
         if (bg)
+        {
             bg->OnObjectDBLoad(obj);
+        }
 
         ++count;
     }
@@ -156,13 +160,17 @@ void LoadHelper(CellCorpseSet const& cell_corpses, CellPair& cell, CorpseMapType
     for (CellCorpseSet::const_iterator itr = cell_corpses.begin(); itr != cell_corpses.end(); ++itr)
     {
         if (itr->second != map->GetInstanceId())
+        {
             continue;
+        }
 
         uint32 player_lowguid = itr->first;
 
         Corpse* obj = sObjectAccessor.GetCorpseForPlayerGUID(ObjectGuid(HIGHGUID_PLAYER, player_lowguid));
         if (!obj)
+        {
             continue;
+        }
 
         grid.AddWorldObject(obj);
 
@@ -170,7 +178,9 @@ void LoadHelper(CellCorpseSet const& cell_corpses, CellPair& cell, CorpseMapType
         obj->SetMap(map);
         obj->AddToWorld();
         if (obj->IsActiveObject())
+        {
             map->AddToActive(obj);
+        }
 
         ++count;
     }
@@ -246,7 +256,7 @@ void ObjectGridLoader::LoadN(void)
         for (unsigned int y = 0; y < MAX_NUMBER_OF_CELLS; ++y)
         {
             i_cell.data.Part.cell_y = y;
-            GridLoader<Player, AllWorldObjectTypes, AllGridObjectTypes> loader;
+            GridLoader<Player, WorldTypeMapContainer, GridTypeMapContainer> loader;
             loader.Load(i_grid(x, y), *this);
         }
     }
@@ -287,7 +297,9 @@ ObjectGridUnloader::Visit(GridRefManager<T> &m)
         T* obj = m.getFirst()->getSource();
         // if option set then object already saved at this moment
         if (!sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATELY))
+        {
             obj->SaveRespawnTime();
+        }
         ///- object must be out of world before delete
         obj->RemoveFromWorld();
         ///- object will get delinked from the manager when deleted

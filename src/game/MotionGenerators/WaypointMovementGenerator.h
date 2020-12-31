@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,6 +100,8 @@ class WaypointMovementGenerator<Creature>
         void OnArrived(Creature&);
         void StartMove(Creature&);
 
+//        void StartMoveNow(Creature& creature);
+
         ShortTimeTracker i_nextMoveTime;
         bool m_isArrivalDone;
         uint32 m_lastReachedWaypoint;
@@ -134,7 +136,7 @@ class FlightPathMovementGenerator
         void SetCurrentNodeAfterTeleport();
         void SkipCurrentNode() { ++i_currentNode; }
         void DoEventIfAny(Player& player, TaxiPathNodeEntry const& node, bool departure);
-        bool GetResetPosition(Player&, float& x, float& y, float& z, float& o) const;
+        bool GetResetPosition(Player&, float& /*x*/, float& /*y*/, float& /*z*/, float& /*o*/) const;
 };
 
 #endif

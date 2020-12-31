@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1027,7 +1027,7 @@ void InitializeOpcodes()
     //OPCODE(SMSG_SPELL_CHANCE_PROC_LOG,                   STATUS_NEVER,    PROCESS_INPLACE,      &WorldSession::Handle_ServerSide               );
     //OPCODE(CMSG_MOVE_SET_RUN_SPEED,                      STATUS_NEVER,    PROCESS_INPLACE,      &WorldSession::Handle_NULL                     );
     OPCODE(SMSG_DISMOUNT,                                STATUS_NEVER,    PROCESS_INPLACE,      &WorldSession::Handle_ServerSide               );
-    OPCODE(SMSG_MOVE_UPDATE_CAN_FLY,                     STATUS_UNHANDLED,    PROCESS_INPLACE,  &WorldSession::Handle_NULL                     );
+    OPCODE(SMSG_MOVE_UPDATE_CAN_FLY,                     STATUS_NEVER,    PROCESS_INPLACE,  &WorldSession::Handle_NULL                     );
     OPCODE(MSG_RAID_READY_CHECK_CONFIRM,                 STATUS_NEVER,    PROCESS_INPLACE,      &WorldSession::Handle_NULL                     );
     OPCODE(CMSG_VOICE_SESSION_ENABLE,                    STATUS_AUTHED,   PROCESS_THREADUNSAFE, &WorldSession::HandleVoiceSessionEnableOpcode  );
     //OPCODE(SMSG_VOICE_SESSION_ENABLE,                    STATUS_NEVER,    PROCESS_INPLACE,      &WorldSession::Handle_NULL                     );

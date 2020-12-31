@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,9 +48,13 @@ namespace Movement
         spline.evaluate_percent(point_Idx, u, c);
 
         if (splineflags.animation)
+        {
             ;// MoveSplineFlag::Animation disables falling or parabolic movement
+        }
         else if (splineflags.parabolic)
+        {
             computeParabolicElevation(c.z);
+        }
         else if (splineflags.falling)
         {
             computeFallElevation(c.z);
@@ -78,7 +82,9 @@ namespace Movement
             }
 
             if (splineflags.orientationInversed)
+            {
                 c.orientation = -c.orientation;
+            }
         }
         return c;
     }

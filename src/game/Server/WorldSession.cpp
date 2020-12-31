@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,9 @@
 #include "BattleGround/BattleGroundMgr.h"
 #include "MapManager.h"
 #include "SocialMgr.h"
+#include "Auth/AuthCrypt.h"
+#include "Auth/HMACSHA1.h"
+#include <zlib.h>
 #ifdef ENABLE_ELUNA
 #include "LuaEngine.h"
 #endif /* ENABLE_ELUNA */
@@ -53,12 +56,6 @@
 // Warden
 #include "WardenWin.h"
 #include "WardenMac.h"
-
-#include "Auth/AuthCrypt.h"
-#include "Auth/HMACSHA1.h"
-#include "zlib.h"
-
-#include <mutex>
 
 // select opcodes appropriate for processing in Map::Update context for current session state
 static bool MapSessionFilterHelper(WorldSession* session, OpcodeHandler const& opHandle)
@@ -147,7 +144,9 @@ WorldSession::~WorldSession()
     ///- empty incoming packet queue
     WorldPacket* packet = NULL;
     while (_recvQueue.next(packet))
-        { delete packet; }
+    {
+        delete packet;
+    }
 }
 
 void WorldSession::SizeError(WorldPacket const& packet, uint32 size) const
@@ -168,9 +167,13 @@ void WorldSession::SendPacket(WorldPacket const* packet)
 #ifdef ENABLE_PLAYERBOTS
     if (GetPlayer()) {
         if (GetPlayer()->GetPlayerbotAI())
+        {
             GetPlayer()->GetPlayerbotAI()->HandleBotOutgoingPacket(*packet);
+        }
         else if (GetPlayer()->GetPlayerbotMgr())
+        {
             GetPlayer()->GetPlayerbotMgr()->HandleMasterOutgoingPacket(*packet);
+        }
     }
 #endif
 
@@ -290,7 +293,9 @@ bool WorldSession::Update(PacketFilter& updater)
 
 #ifdef ENABLE_PLAYERBOTS
                     if (_player && _player->GetPlayerbotMgr())
+                    {
                         _player->GetPlayerbotMgr()->HandleMasterIncomingPacket(*packet);
+                    }
 #endif
                     break;
                 case STATUS_LOGGEDIN_OR_RECENTLY_LOGGEDOUT:
@@ -300,7 +305,9 @@ bool WorldSession::Update(PacketFilter& updater)
                     }
                     else
                         // not expected _player or must checked in packet hanlder
-                        { ExecuteOpcode(opHandle, packet); }
+                    {
+                        ExecuteOpcode(opHandle, packet);
+                    }
                     break;
                 case STATUS_TRANSFER:
                     if (!_player)
@@ -327,7 +334,9 @@ bool WorldSession::Update(PacketFilter& updater)
                     // single from authed time opcodes send in to after logout time
                     // and before other STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT opcodes.
                     if (packet->GetOpcode() != CMSG_SET_ACTIVE_VOICE_CHANNEL)
+                    {
                         m_playerRecentlyLogout = false;
+                    }
 
                     ExecuteOpcode(opHandle, packet);
                     break;
@@ -372,7 +381,9 @@ bool WorldSession::Update(PacketFilter& updater)
 
 #ifdef ENABLE_PLAYERBOTS
     if (GetPlayer() && GetPlayer()->GetPlayerbotMgr())
+    {
         GetPlayer()->GetPlayerbotMgr()->UpdateSessions(0);
+    }
 #endif
 
     ///- Cleanup socket pointer if need
@@ -401,7 +412,9 @@ bool WorldSession::Update(PacketFilter& updater)
 //           _warden->Update();
 
         if (!m_Socket)
-            { return false; }                                   // Will remove this session from the world session map
+        {
+            return false;                                    // Will remove this session from the world session map
+        }
     }
 
     return true;
@@ -425,7 +438,9 @@ void WorldSession::LogoutPlayer(bool Save)
 {
     // finish pending transfers before starting the logout
     while (_player && _player->IsBeingTeleportedFar())
-        { HandleMoveWorldportAckOpcode(); }
+    {
+        HandleMoveWorldportAckOpcode();
+    }
 
     m_playerLogout = true;
     m_playerSave = Save;
@@ -434,7 +449,9 @@ void WorldSession::LogoutPlayer(bool Save)
     {
 #ifdef ENABLE_PLAYERBOTS
         if (GetPlayer()->GetPlayerbotMgr())
+        {
             GetPlayer()->GetPlayerbotMgr()->LogoutAllBots();
+        }
 #endif
 
         sLog.outChar("Account: %d (IP: %s) Logout Character:[%s] (guid: %u)", GetAccountId(), GetRemoteAddress().c_str(), _player->GetName() , _player->GetGUIDLow());
@@ -446,7 +463,9 @@ void WorldSession::LogoutPlayer(bool Save)
 
 #ifdef ENABLE_PLAYERBOTS
         if (_player->GetPlayerbotMgr())
+        {
             _player->GetPlayerbotMgr()->LogoutAllBots();
+        }
         sRandomPlayerbotMgr.OnPlayerLogout(_player);
 #endif
 
@@ -527,7 +546,9 @@ void WorldSession::LogoutPlayer(bool Save)
         // FG: finish pending transfers after starting the logout
         // this should fix players beeing able to logout and login back with full hp at death position
         while (_player->IsBeingTeleportedFar())
-            { HandleMoveWorldportAckOpcode(); }
+        {
+            HandleMoveWorldportAckOpcode();
+        }
 
         for (int i = 0; i < PLAYER_MAX_BATTLEGROUND_QUEUES; ++i)
         {
@@ -752,13 +773,17 @@ void WorldSession::SendSetPhaseShift(uint32 phaseMask, uint16 mapId)
 
     data << uint32(phaseMask ? 2 : 0);  // WRONG: number of Phase.dbc ids * 2
     if (phaseMask)
+    {
         data << uint16(phaseMask);
+    }
 
     data.WriteGuidBytes<3, 0>(guid);
 
     data << uint32(mapId ? 2 : 0);      // number of terrains swaps * 2
     if (mapId)
+    {
         data << uint16(mapId);
+    }
 
     data.WriteGuidBytes<5>(guid);
     SendPacket(&data);
@@ -876,7 +901,9 @@ void WorldSession::LoadAccountData(QueryResult* result, uint32 mask)
 {
     for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
         if (mask & (1 << i))
+        {
             m_accountData[i] = AccountData();
+        }
 
     if (!result)
     {
@@ -963,7 +990,9 @@ void WorldSession::SendAccountDataTimes(uint32 mask)
     data << uint32(mask);                                   // type mask
     for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
         if (mask & (1 << i))
+        {
             data << uint32(GetAccountData(AccountDataType(i))->Time);// also unix time
+        }
     SendPacket(&data);
 }
 
@@ -996,23 +1025,6 @@ void WorldSession::LoadTutorialsData()
     delete result;
 
     m_tutorialState = TUTORIALDATA_UNCHANGED;
-}
-
-// Send chat information about aborted transfer (mostly used by Player::SendTransferAbortedByLockstatus())
-void WorldSession::SendTransferAborted(uint32 mapid, uint8 reason, uint8 arg)
-{
-    WorldPacket data(SMSG_TRANSFER_ABORTED, 4 + 2);
-    data << uint32(mapid);
-    data << uint8(reason);                                  // transfer abort reason
-    switch (reason)
-    {
-        case TRANSFER_ABORT_INSUF_EXPAN_LVL:
-        case TRANSFER_ABORT_DIFFICULTY:
-        case TRANSFER_ABORT_UNIQUE_MESSAGE:
-            data << uint8(arg);
-            break;
-    }
-    SendPacket(&data);
 }
 
 void WorldSession::SendTutorialsData()
@@ -1063,6 +1075,23 @@ void WorldSession::SaveTutorialsData()
     }
 
     m_tutorialState = TUTORIALDATA_UNCHANGED;
+}
+
+// Send chat information about aborted transfer (mostly used by Player::SendTransferAbortedByLockstatus())
+void WorldSession::SendTransferAborted(uint32 mapid, uint8 reason, uint8 arg)
+{
+    WorldPacket data(SMSG_TRANSFER_ABORTED, 4 + 2);
+    data << uint32(mapid);
+    data << uint8(reason);                                  // transfer abort reason
+    switch (reason)
+    {
+        case TRANSFER_ABORT_INSUF_EXPAN_LVL:
+        case TRANSFER_ABORT_DIFFICULTY:
+        case TRANSFER_ABORT_UNIQUE_MESSAGE:
+            data << uint8(arg);
+            break;
+    }
+    SendPacket(&data);
 }
 
 void WorldSession::ReadAddonsInfo(ByteBuffer &data)
@@ -1122,10 +1151,14 @@ void WorldSession::ReadAddonsInfo(ByteBuffer &data)
         addonInfo >> unk2;
 
         if (addonInfo.rpos() != addonInfo.size())
+        {
             DEBUG_LOG("packet under read!");
+        }
     }
     else
+    {
         sLog.outError("Addon packet uncompress error!");
+    }
 }
 
 void WorldSession::SendAddonsInfo()
@@ -1164,7 +1197,9 @@ void WorldSession::SendAddonsInfo()
             uint8 unk2 = (itr->CRC != 0x4c1c776d);          // If addon is Standard addon CRC
             data << uint8(unk2);                            // if 1, than add addon public signature
             if (unk2)                                       // if CRC is wrong, add public key (client need it)
+            {
                 data.append(tdata, sizeof(tdata));
+            }
 
             data << uint32(0);
         }

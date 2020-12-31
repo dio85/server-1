@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,18 +34,12 @@ DelayExecutor* DelayExecutor::instance()
 }
 
 DelayExecutor::DelayExecutor()
-    : pre_svc_hook_(0), post_svc_hook_(0), activated_(false)
+    : activated_(false)
 {
 }
 
 DelayExecutor::~DelayExecutor()
 {
-    if (pre_svc_hook_)
-        delete pre_svc_hook_;
-
-    if (post_svc_hook_)
-        delete post_svc_hook_;
-
     deactivate();
 }
 
@@ -65,27 +59,23 @@ int DelayExecutor::deactivate()
 
 int DelayExecutor::svc()
 {
-    if (pre_svc_hook_)
-        pre_svc_hook_->call();
-
     for (;;)
     {
         ACE_Method_Request* rq = queue_.dequeue();
 
         if (!rq)
+        {
             break;
+        }
 
         rq->call();
         delete rq;
     }
 
-    if (post_svc_hook_)
-        post_svc_hook_->call();
-
     return 0;
 }
 
-int DelayExecutor::activate(int num_threads, ACE_Method_Request* pre_svc_hook, ACE_Method_Request* post_svc_hook)
+int DelayExecutor::_activate(int num_threads)
 {
     if (activated())
     {
@@ -96,15 +86,6 @@ int DelayExecutor::activate(int num_threads, ACE_Method_Request* pre_svc_hook, A
     {
         return -1;
     }
-
-    if (pre_svc_hook_)
-        delete pre_svc_hook_;
-
-    if (post_svc_hook_)
-        delete post_svc_hook_;
-
-    pre_svc_hook_ = pre_svc_hook;
-    post_svc_hook_ = post_svc_hook;
 
     queue_.queue()->activate();
 

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,10 +43,14 @@ void WaypointMovementGenerator<Creature>::LoadPath(Creature& creature, int32 pat
     DETAIL_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "LoadPath: loading waypoint path for %s", creature.GetGuidStr().c_str());
 
     if (!overwriteEntry)
+    {
         overwriteEntry = creature.GetEntry();
+    }
 
     if (wpOrigin == PATH_NO_PATH && pathId == 0)
+    {
         i_path = sWaypointMgr.GetDefaultPath(overwriteEntry, creature.GetGUIDLow(), &m_PathOrigin);
+    }
     else
     {
         m_PathOrigin = wpOrigin == PATH_NO_PATH ? PATH_FROM_ENTRY : wpOrigin;
@@ -58,9 +62,13 @@ void WaypointMovementGenerator<Creature>::LoadPath(Creature& creature, int32 pat
     if (!i_path)
     {
         if (m_PathOrigin == PATH_FROM_EXTERNAL)
+        {
             sLog.outErrorScriptLib("WaypointMovementGenerator::LoadPath: %s doesn't have waypoint path %i", creature.GetGuidStr().c_str(), pathId);
+        }
         else
+        {
             sLog.outErrorDb("WaypointMovementGenerator::LoadPath: %s doesn't have waypoint path %i", creature.GetGuidStr().c_str(), pathId);
+        }
         return;
     }
 
@@ -186,7 +194,9 @@ void WaypointMovementGenerator<Creature>::OnArrived(Creature& creature)
     {
         uint32 type = WAYPOINT_MOTION_TYPE;
         if (m_PathOrigin == PATH_FROM_EXTERNAL && m_pathId > 0)
+        {
             type = EXTERNAL_WAYPOINT_MOVE + m_pathId;
+        }
         creature.AI()->MovementInform(type, i_currentNode);
     }
 
@@ -237,9 +247,13 @@ void WaypointMovementGenerator<Creature>::StartMove(Creature& creature)
         if (creature.AI() && m_PathOrigin == PATH_FROM_EXTERNAL &&  m_pathId > 0)
         {
             if (!reachedLast)
+            {
                 creature.AI()->MovementInform(EXTERNAL_WAYPOINT_MOVE_START + m_pathId, currPoint->first);
+            }
             else
+            {
                 creature.AI()->MovementInform(EXTERNAL_WAYPOINT_FINISHED_LAST + m_pathId, currPoint->first);
+            }
 
             if (creature.IsDead() || !creature.IsInWorld()) // Might have happened with above calls
             {
@@ -345,7 +359,9 @@ bool WaypointMovementGenerator<Creature>::GetResetPosition(Creature&, float& x, 
     z = curWP->z;
 
     if (curWP->orientation != 100)
+    {
         o = curWP->orientation;
+    }
     else                                                    // Calculate the resulting angle based on positions between previous and current waypoint
     {
         WaypointNode const* prevWP;
@@ -355,7 +371,9 @@ bool WaypointMovementGenerator<Creature>::GetResetPosition(Creature&, float& x, 
             prevWP = &(lastPoint->second);
         }
         else                                                // Take the last waypoint (crbegin()) as previous
+        {
             prevWP = &(i_path->rbegin()->second);
+        }
 
         float dx = x - prevWP->x;
         float dy = y - prevWP->y;
@@ -486,7 +504,7 @@ void FlightPathMovementGenerator::Reset(Player& player)
     init.Launch();
 }
 
-bool FlightPathMovementGenerator::Update(Player& player, const uint32& diff)
+bool FlightPathMovementGenerator::Update(Player& player, const uint32& /*diff*/)
 {
     uint32 pointId = (uint32)player.movespline->currentPathIdx();
     if (pointId > i_currentNode)
@@ -535,6 +553,7 @@ void FlightPathMovementGenerator::DoEventIfAny(Player& player, TaxiPathNodeEntry
         StartEvents_Event(player.GetMap(), eventid, &player, &player, departure);
     }
 }
+
 bool FlightPathMovementGenerator::GetResetPosition(Player&, float& x, float& y, float& z, float& o) const
 {
     const TaxiPathNodeEntry& node = (*i_path)[i_currentNode];

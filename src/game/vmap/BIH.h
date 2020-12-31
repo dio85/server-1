@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -313,7 +313,9 @@ class BIH
                     else
                     {
                         if (axis > 2)
-                            { return; } // should not happen
+                        {
+                            return;  // should not happen
+                        }
                         float tf = (intBitsToFloat(tree[node + offsetFront[axis]]) - org[axis]) * invDir[axis];
                         float tb = (intBitsToFloat(tree[node + offsetBack[axis]]) - org[axis]) * invDir[axis];
                         node = offset;
@@ -421,7 +423,9 @@ class BIH
                     else // BVH2 node (empty space cut off left and right)
                     {
                         if (axis > 2)
-                            { return; } // should not happen
+                        {
+                            return;  // should not happen
+                        }
                         float tl = intBitsToFloat(tree[node + 1]);
                         float tr = intBitsToFloat(tree[node + 2]);
                         node = offset;

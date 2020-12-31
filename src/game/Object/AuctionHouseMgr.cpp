@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -141,7 +141,9 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction)
         {
             std::string owner_name;
             if (auction_owner)
+            {
                 owner_name = auction_owner->GetName();
+            }
             else if (ownerGuid && !sObjectMgr.GetPlayerNameByGUID(ownerGuid, owner_name))
             {
                 owner_name = sObjectMgr.GetMangosStringForDBCLocale(LANG_UNKNOWN);
@@ -159,7 +161,9 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction)
     }
 
     if (auction_owner)
+    {
         auction_owner->GetSession()->SendAuctionOwnerNotification(auction);
+    }
 
     // receiver exist
     if (bidder || bidder_accId)
@@ -272,7 +276,9 @@ void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry* auction)
         subject << auction->itemTemplate << ":" << auction->itemRandomPropertyId << ":" << AUCTION_EXPIRED << ":" << auction->Id << ":" << auction->itemCount;
 
         if (owner)
+        {
             owner->GetSession()->SendAuctionOwnerNotification(auction);
+        }
 
         RemoveAItem(auction->itemGuidLow);                  // we have to remove the item, before we delete it !!
         auction->itemGuidLow = 0;
@@ -408,7 +414,9 @@ void AuctionHouseMgr::LoadAuctions()
             {
                 std::string plName;
                 if (!sObjectMgr.GetPlayerNameByGUID(ObjectGuid(HIGHGUID_PLAYER, auction->owner), plName))
+                {
                     plName = sObjectMgr.GetMangosStringForDBCLocale(LANG_UNKNOWN);
+                }
 
                 Utf8toWStr(plName, plWName);
             }
@@ -426,7 +434,9 @@ void AuctionHouseMgr::LoadAuctions()
         auction->auctionHouseEntry = NULL;                  // init later
 
         if (auction->moneyDeliveryTime)
+        {
             auction->itemGuidLow = 0;                       // must be 0 if auction delivery pending
+        }
         else
         {
         // check if sold item exists for guid
@@ -567,13 +577,21 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(Unit* unit)
                 {
                     FactionTemplateEntry const* u_entry = sFactionTemplateStore.LookupEntry(factionTemplateId);
                     if (!u_entry)
-                        { houseid = 7; }                        // goblin auction house
+                    {
+                        houseid = 7;                         // goblin auction house
+                    }
                     else if (u_entry->ourMask & FACTION_MASK_ALLIANCE)
-                        { houseid = 1; }                        // human auction house
+                    {
+                        houseid = 1;                         // human auction house
+                    }
                     else if (u_entry->ourMask & FACTION_MASK_HORDE)
-                        { houseid = 6; }                        // orc auction house
+                    {
+                        houseid = 6;                         // orc auction house
+                    }
                     else
-                        { houseid = 7; }                        // goblin auction house
+                    {
+                        houseid = 7;                         // goblin auction house
+                    }
                     break;
                 }
             }
@@ -625,7 +643,9 @@ void AuctionHouseObject::Update()
             {
                 ///- perform the transaction if there was bidder
                 if (itr->second->bid)
+                {
                     itr->second->AuctionBidWinning();
+                }
                 ///- cancel the auction if there was no bidder and clear the auction
                 else
                 {
@@ -649,7 +669,9 @@ void AuctionHouseObject::BuildListBidderItems(WorldPacket& data, Player* player,
     {
         AuctionEntry* Aentry = itr->second;
         if (Aentry->moneyDeliveryTime)                      // skip pending sell auctions
+        {
             continue;
+        }
         if (Aentry->bidder == player->GetGUIDLow())
         {
             if (itr->second->BuildAuctionInfo(data))
@@ -667,7 +689,9 @@ void AuctionHouseObject::BuildListOwnerItems(WorldPacket& data, Player* player, 
     {
         AuctionEntry* Aentry = itr->second;
         if (Aentry->moneyDeliveryTime)                      // skip pending sell auctions
+        {
             continue;
+        }
         if (Aentry->owner == player->GetGUIDLow())
         {
             if (Aentry->BuildAuctionInfo(data))
@@ -879,7 +903,9 @@ bool AuctionSorter::operator()(const AuctionEntry* auc1, const AuctionEntry* auc
         int res = auc1->CompareAuctionEntry(m_sort[i] & ~AUCTION_SORT_REVERSED, auc2, m_viewPlayer);
         // "equal" by used column
         if (res == 0)
+        {
             continue;
+        }
         // less/greater and normal/reversed ordered
         return (res < 0) == ((m_sort[i] & AUCTION_SORT_REVERSED) == 0);
     }
@@ -896,7 +922,9 @@ void WorldSession::BuildListAuctionItems(std::vector<AuctionEntry*> const& aucti
     {
         AuctionEntry* Aentry = *itr;
         if (Aentry->moneyDeliveryTime)
+        {
             continue;
+        }
         Item* item = sAuctionMgr.GetAItem(Aentry->itemGuidLow);
         if (!item)
         {
@@ -940,7 +968,9 @@ void WorldSession::BuildListAuctionItems(std::vector<AuctionEntry*> const& aucti
             if (usable != 0x00)
             {
                 if (_player->CanUseItem(item) != EQUIP_ERR_OK)
+                {
                     continue;
+                }
 
                 if (proto->Class == ITEM_CLASS_RECIPE)
                 {
@@ -948,10 +978,14 @@ void WorldSession::BuildListAuctionItems(std::vector<AuctionEntry*> const& aucti
                     {
                         SpellEffectEntry const* spellEff = spell->GetSpellEffect(EFFECT_INDEX_0);
                         if (!spellEff)
+                        {
                             continue;
+                        }
 
                         if (_player->HasSpell(spellEff->EffectTriggerSpell))
+                        {
                             continue;
+                        }
                     }
                 }
             }
@@ -981,7 +1015,9 @@ void AuctionHouseObject::BuildListPendingSales(WorldPacket& data, Player* player
     {
         AuctionEntry* Aentry = itr->second;
         if (!Aentry->moneyDeliveryTime)                     // skip not pending auctions
+        {
             continue;
+        }
         if (Aentry->owner == player->GetGUIDLow())
         {
             std::ostringstream str1;
@@ -1016,7 +1052,9 @@ AuctionEntry* AuctionHouseObject::AddAuction(AuctionHouseEntry const* auctionHou
     AH->owner = pl ? pl->GetGUIDLow() : 0;
 
     if (pl)
+    {
         Utf8toWStr(pl->GetName(), AH->ownerName);
+    }
 
     AH->startbid = bid;
     AH->bidder = 0;
@@ -1040,6 +1078,40 @@ AuctionEntry* AuctionHouseObject::AddAuction(AuctionHouseEntry const* auctionHou
     {
         pl->SaveInventoryAndGoldToDB();
     }
+
+    CharacterDatabase.CommitTransaction();
+
+    return AH;
+}
+
+AuctionEntry* AuctionHouseObject::AddAuctionByGuid(AuctionHouseEntry const* auctionHouseEntry, Item* newItem, uint32 etime, uint32 bid, uint32 buyout, uint32 lowguid)
+{
+    uint32 auction_time = uint32(etime * sWorld.getConfig(CONFIG_FLOAT_RATE_AUCTION_TIME));
+
+    AuctionEntry* AH = new AuctionEntry;
+    AH->Id = sObjectMgr.GenerateAuctionID();
+    AH->itemGuidLow = newItem->GetObjectGuid().GetCounter();
+    AH->itemTemplate = newItem->GetEntry();
+    AH->itemCount = newItem->GetCount();
+    AH->itemRandomPropertyId = newItem->GetItemRandomPropertyId();
+    AH->owner = lowguid;
+    AH->startbid = bid;
+    AH->bidder = 0;
+    AH->bid = 0;
+    AH->buyout = buyout;
+    AH->expireTime = time(NULL) + auction_time;
+    AH->moneyDeliveryTime = 0;
+    AH->deposit = 0;
+    AH->auctionHouseEntry = auctionHouseEntry;
+
+    AddAuction(AH);
+
+    sAuctionMgr.AddAItem(newItem);
+
+    CharacterDatabase.BeginTransaction();
+
+    newItem->SaveToDB();
+    AH->SaveToDB();
 
     CharacterDatabase.CommitTransaction();
 
@@ -1142,7 +1214,9 @@ bool AuctionEntry::UpdateBid(uint64 newbid, Player* newbidder /*=NULL*/)
     else
     {
         if (newbidder)
+        {
             newbidder->ModifyMoney(-int64(newbid));
+        }
 
         if (bidder)                                     // return money to old bidder if present
         {
@@ -1156,7 +1230,9 @@ bool AuctionEntry::UpdateBid(uint64 newbid, Player* newbidder /*=NULL*/)
     if ((newbid < buyout) || (buyout == 0))                 // bid
     {
         if (auction_owner)
+        {
             auction_owner->GetSession()->SendAuctionOwnerNotification(this);
+        }
 
         // after this update we should save player's money ...
         CharacterDatabase.BeginTransaction();

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,9 @@ Map::~Map()
     }
 
     if (m_persistentState)
-        { m_persistentState->SetUsedByMapState(NULL); }         // field pointer can be deleted after this
+    {
+        m_persistentState->SetUsedByMapState(NULL);          // field pointer can be deleted after this
+    }
 
 //#ifdef ENABLE_ELUNA
 //    if (Instanceable())
@@ -131,6 +133,7 @@ Map::Map(uint32 id, time_t expiry, uint32 InstanceId, uint8 SpawnMode)
     m_persistentState->SetUsedByMapState(this);
 
     m_weatherSystem = new WeatherSystem(this);
+
 #ifdef ENABLE_ELUNA
     sEluna->OnCreate(this);
 #endif /* ENABLE_ELUNA */
@@ -374,7 +377,7 @@ Map::Add(T* obj)
     obj->SetMap(this);
 
     Cell cell(p);
-    if (obj->IsActiveObject())
+    if (obj->isActiveObject())
     {
         EnsureGridLoadedAtEnter(cell);
     }
@@ -389,7 +392,7 @@ Map::Add(T* obj)
     AddToGrid(obj, grid, cell);
     obj->AddToWorld();
 
-    if (obj->IsActiveObject())
+    if (obj->isActiveObject())
     {
         AddToActive(obj);
     }
@@ -835,12 +838,12 @@ void Map::CreatureRelocation(Creature* creature, float x, float y, float z, floa
     MANGOS_ASSERT(CheckGridIntegrity(creature, true));
 }
 
-bool Map::CreatureCellRelocation(Creature* c, const Cell& new_cell)
+bool Map::CreatureCellRelocation(Creature* c, Cell new_cell)
 {
     Cell const& old_cell = c->GetCurrentCell();
     if (old_cell.DiffGrid(new_cell))
     {
-        if (!c->IsActiveObject() && !loaded(new_cell.gridPair()))
+        if (!c->isActiveObject() && !loaded(new_cell.gridPair()))
         {
             DEBUG_FILTER_LOG(LOG_FILTER_CREATURE_MOVES, "Creature (GUID: %u Entry: %u) attempt move from grid[%u,%u]cell[%u,%u] to unloaded grid[%u,%u]cell[%u,%u].", c->GetGUIDLow(), c->GetEntry(), old_cell.GridX(), old_cell.GridY(), old_cell.CellX(), old_cell.CellY(), new_cell.GridX(), new_cell.GridY(), new_cell.CellX(), new_cell.CellY());
             return false;
@@ -1012,7 +1015,9 @@ void Map::SendInitSelf(Player* player)
 
     // attach to player data current transport data
     if (Transport* transport = player->GetTransport())
+    {
         transport->BuildCreateUpdateBlockForPlayer(&data, player);
+    }
 
     // build data for self presence in world at own client (one time for map)
     player->BuildCreateUpdateBlockForPlayer(&data, player);
@@ -1120,9 +1125,13 @@ void Map::AddObjectToRemoveList(WorldObject* obj)
 
 #ifdef ENABLE_ELUNA
     if (Creature* creature = obj->ToCreature())
+    {
         sEluna->OnRemove(creature);
+    }
     else if (GameObject* gameobject = obj->ToGameObject())
+    {
         sEluna->OnRemove(gameobject);
+    }
 #endif /* ENABLE_ELUNA */
 
     obj->CleanupsBeforeDelete();                            // remove or simplify at least cross referenced links
@@ -1234,7 +1243,9 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
         CellPair p = MaNGOS::ComputeCellPair(plr->GetPositionX(), plr->GetPositionY());
         if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
             (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            { return true; }
+        {
+            return true;
+        }
     }
 
     for (ActiveNonPlayers::const_iterator iter = m_activeNonPlayers.begin(); iter != m_activeNonPlayers.end(); ++iter)
@@ -1244,7 +1255,9 @@ bool Map::ActiveObjectsNearGrid(uint32 x, uint32 y) const
         CellPair p = MaNGOS::ComputeCellPair(obj->GetPositionX(), obj->GetPositionY());
         if ((cell_min.x_coord <= p.x_coord && p.x_coord <= cell_max.x_coord) &&
             (cell_min.y_coord <= p.y_coord && p.y_coord <= cell_max.y_coord))
-            { return true; }
+        {
+            return true;
+        }
     }
 
     return false;
@@ -1400,12 +1413,16 @@ void Map::CreateInstanceData(bool load)
     if (Instanceable())
     {
         if (InstanceTemplate const* mInstance = ObjectMgr::GetInstanceTemplate(GetId()))
+        {
             i_script_id = mInstance->script_id;
+        }
     }
     else
     {
         if (WorldTemplate const* mInstance = ObjectMgr::GetWorldTemplate(GetId()))
+        {
             i_script_id = mInstance->script_id;
+        }
     }
 
     if (!i_script_id)
@@ -1425,9 +1442,13 @@ void Map::CreateInstanceData(bool load)
         QueryResult* result;
 
         if (Instanceable())
+        {
             result = CharacterDatabase.PQuery("SELECT data FROM instance WHERE id = '%u'", i_InstanceId);
+        }
         else
+        {
             result = CharacterDatabase.PQuery("SELECT data FROM world WHERE map = '%u'", GetId());
+        }
 
         if (result)
         {
@@ -1444,7 +1465,9 @@ void Map::CreateInstanceData(bool load)
         {
             // for non-instanceable map always add data to table if not found, later code expected that for map in `word` exist always after load
             if (!Instanceable())
+            {
                 CharacterDatabase.PExecute("INSERT INTO world VALUES ('%u', '')", GetId());
+            }
         }
     }
     else
@@ -1637,7 +1660,9 @@ bool DungeonMap::Add(Player* player)
             }
             else
                 // can not jump to a different instance without resetting it
-                { MANGOS_ASSERT(playerBind->state == GetPersistentState()); }
+            {
+                MANGOS_ASSERT(playerBind->state == GetPersistentState());
+            }
         }
     }
 
@@ -1776,7 +1801,9 @@ void DungeonMap::SetResetSchedule(bool on)
     // the reset time is only scheduled when there are no payers inside
     // it is assumed that the reset time will rarely (if ever) change while the reset is scheduled
     if (!HavePlayers() && !IsRaidOrHeroicDungeon())
+    {
         sMapPersistentStateMgr.GetScheduler().ScheduleReset(on, GetPersistanceState()->GetResetTime(), DungeonResetEvent(RESET_EVENT_NORMAL_DUNGEON, GetId(), Difficulty(GetSpawnMode()), GetInstanceId()));
+    }
 }
 
 DungeonPersistentState* DungeonMap::GetPersistanceState() const
@@ -2000,7 +2027,7 @@ void Map::ScriptsProcess()
  */
 Player* Map::GetPlayer(ObjectGuid guid)
 {
-    Player* plr = ObjectAccessor::FindPlayer(guid);         // return only in world players
+    Player* plr = sObjectAccessor.FindPlayer(guid);         // return only in world players
     return plr && plr->GetMap() == this ? plr : NULL;
 }
 
@@ -2033,7 +2060,7 @@ Pet* Map::GetPet(ObjectGuid guid)
  */
 Corpse* Map::GetCorpse(ObjectGuid guid)
 {
-    Corpse* ret = ObjectAccessor::GetCorpseInMap(guid, GetId());
+    Corpse* ret = sObjectAccessor.GetCorpseInMap(guid, GetId());
     return ret && ret->GetInstanceId() == GetInstanceId() ? ret : NULL;
 }
 
@@ -2311,7 +2338,9 @@ bool Map::GetHeightInRange(uint32 phasemask, float x, float y, float& z, float m
 
     VMAP::IVMapManager* vmgr = VMAP::VMapFactory::createOrGetVMapManager();
     if (!vmgr->isLineOfSightCalcEnabled())
+    {
         vmgr = NULL;
+    }
 
     if (vmgr)
     {
@@ -2321,7 +2350,9 @@ bool Map::GetHeightInRange(uint32 phasemask, float x, float y, float& z, float m
 
     // find raw height from .map file on X,Y coordinates
     if (GridMap* gmap = const_cast<TerrainInfo*>(m_TerrainData)->GetGrid(x, y)) // TODO:: find a way to remove that const_cast
+    {
         mapHeight = gmap->getHeight(x, y);
+    }
 
     float diffMaps = fabs(fabs(z) - fabs(mapHeight));
     float diffVmaps = fabs(fabs(z) - fabs(vmapHeight));
@@ -2331,9 +2362,13 @@ bool Map::GetHeightInRange(uint32 phasemask, float x, float y, float& z, float m
         {
             // well we simply have to take the highest as normally there we cannot be on top of cavern is maxSearchDist is not too big
             if (vmapHeight > mapHeight)
+            {
                 height = vmapHeight;
+            }
             else
+            {
                 height = mapHeight;
+            }
 
             //sLog.outString("vmap %5.4f, map %5.4f, height %5.4f", vmapHeight, mapHeight, height);
         }
@@ -2400,7 +2435,9 @@ bool Map::GetRandomPointUnderWater(uint32 phaseMask, float& x, float& y, float& 
     {
         float min_z = z - 0.7f * radius; // 0.7 to have a bit a "flat" cylinder, TODO which value looks nicest
         if (min_z < ground)
+        {
             min_z = ground + 0.5f; // Get some space to prevent under map
+        }
 
         float liquidLevel = liquid_status.level - 2.0f; // just to make the generated point is in water and not on surface or a bit above
 
@@ -2436,7 +2473,9 @@ bool Map::GetRandomPointInTheAir(uint32 phaseMask, float& x, float& y, float& z,
     {
         float min_z = z - 0.7f * radius; // 0.7 to have a bit a "flat" cylinder, TODO which value looks nicest
         if (min_z < ground)
+        {
             min_z = ground + 2.5f; // Get some space to prevent landing
+        }
         float max_z = std::max(z + 0.7f * radius, min_z);
         x = i_x;
         y = i_y;

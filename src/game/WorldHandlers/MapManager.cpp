@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ void MapManager::InitializeVisibilityDistanceInfo()
 /// @param id - MapId of the to be created map. @param obj WorldObject for which the map is to be created. Must be player for Instancable maps.
 Map* MapManager::CreateMap(uint32 id, const WorldObject* obj)
 {
-    Guard _guard(*this);
+    ACE_GUARD_RETURN(LOCK_TYPE, _guard, m_lock, NULL)
 
     Map* m = NULL;
 
@@ -113,7 +113,7 @@ Map* MapManager::CreateMap(uint32 id, const WorldObject* obj)
 
     if (entry->Instanceable())
     {
-        MANGOS_ASSERT(obj && obj->GetTypeId() == TYPEID_PLAYER);
+        MANGOS_ASSERT(obj->GetTypeId() == TYPEID_PLAYER);
         // create DungeonMap object
         m = CreateInstance(id, (Player*)obj);
         // Load active objects for this map
@@ -141,13 +141,13 @@ Map* MapManager::CreateBgMap(uint32 mapid, BattleGround* bg)
 {
     sTerrainMgr.LoadTerrain(mapid);
 
-    Guard _guard(*this);
+    ACE_GUARD_RETURN(LOCK_TYPE, _guard, m_lock, NULL)
     return CreateBattleGroundMap(mapid, sObjectMgr.GenerateInstanceLowGuid(), bg);
 }
 
 Map* MapManager::FindMap(uint32 mapid, uint32 instanceId) const
 {
-    Guard guard(*this);
+    ACE_GUARD_RETURN(LOCK_TYPE, _guard, m_lock, NULL)
 
     MapMapType::const_iterator iter = i_maps.find(MapID(mapid, instanceId));
     if (iter == i_maps.end())
@@ -167,7 +167,7 @@ Map* MapManager::FindMap(uint32 mapid, uint32 instanceId) const
 
 void MapManager::DeleteInstance(uint32 mapid, uint32 instanceId)
 {
-    Guard _guard(*this);
+    ACE_GUARD(LOCK_TYPE, _guard, m_lock)
 
     MapMapType::iterator iter = i_maps.find(MapID(mapid, instanceId));
     if (iter != i_maps.end())
@@ -216,7 +216,9 @@ void MapManager::Update(uint32 diff)
             i_maps.erase(iter++);
         }
         else
+        {
             ++iter;
+        }
     }
 
     i_timer.SetCurrent(0);
@@ -266,10 +268,15 @@ void MapManager::UnloadAll()
 uint32 MapManager::GetNumInstances()
 {
     uint32 ret = 0;
+
+    ACE_GUARD_RETURN(LOCK_TYPE, _guard, m_lock, ret)
     for (MapMapType::iterator itr = i_maps.begin(); itr != i_maps.end(); ++itr)
     {
         Map* map = itr->second;
-        if (!map->IsDungeon()) continue;
+        if (!map->IsDungeon())
+        {
+            continue;
+        }
         ret += 1;
     }
     return ret;
@@ -278,10 +285,15 @@ uint32 MapManager::GetNumInstances()
 uint32 MapManager::GetNumPlayersInInstances()
 {
     uint32 ret = 0;
+
+    ACE_GUARD_RETURN(LOCK_TYPE, _guard, m_lock, ret)
     for (MapMapType::iterator itr = i_maps.begin(); itr != i_maps.end(); ++itr)
     {
         Map* map = itr->second;
-        if (!map->IsDungeon()) continue;
+        if (!map->IsDungeon())
+        {
+            continue;
+        }
         ret += map->GetPlayers().getSize();
     }
     return ret;
@@ -311,7 +323,9 @@ Map* MapManager::CreateInstance(uint32 id, Player* player)
         map = FindMap(id, NewInstanceId);
         // it is possible that the save exists but the map doesn't
         if (!map)
+        {
             pNewMap = CreateDungeonMap(id, NewInstanceId, pSave->GetDifficulty(), pSave);
+        }
     }
     else
     {
@@ -349,7 +363,9 @@ DungeonMap* MapManager::CreateDungeonMap(uint32 id, uint32 InstanceId, Difficult
 
     // some instances only have one difficulty
     if (!GetMapDifficultyData(id, difficulty))
+    {
         difficulty = DUNGEON_DIFFICULTY_NORMAL;
+    }
 
     DEBUG_LOG("MapInstanced::CreateDungeonMap: %s map instance %d for %d created with difficulty %d", save ? "" : "new ", InstanceId, id, difficulty);
 

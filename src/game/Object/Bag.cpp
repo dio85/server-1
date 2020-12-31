@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "Bag.h"
 #include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
+#include "Log.h"
 #include "UpdateData.h"
 
 Bag::Bag(): Item()
@@ -236,7 +237,9 @@ uint32 Bag::GetItemCount(uint32 item, Item* eItem) const
         for (uint32 i = 0; i < GetBagSize(); ++i)
             if (m_bagslot[i])
                 if (m_bagslot[i] != eItem && m_bagslot[i]->GetProto()->Socket[0].Color)
+                {
                     count += m_bagslot[i]->GetGemCountWithID(item);
+                }
 
     return count;
 }
@@ -248,7 +251,9 @@ uint32 Bag::GetItemCountWithLimitCategory(uint32 limitCategory, Item* eItem) con
     for (uint32 i = 0; i < GetBagSize(); ++i)
         if (m_bagslot[i])
             if (m_bagslot[i] != eItem && m_bagslot[i]->GetProto()->ItemLimitCategory == limitCategory)
+            {
                 count += m_bagslot[i]->GetCount();
+            }
 
     return count;
 }

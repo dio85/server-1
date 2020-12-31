@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,9 @@ namespace Movement
 
         // If boarded use current local position
         if (transportInfo)
+        {
             transportInfo->GetLocalPosition(real_position.x, real_position.y, real_position.z, real_position.orientation);
+        }
 
         // there is a big chance that current position is unknown if current state is not finalized, need compute it
         // this also allows calculate spline position and update map position in much greater intervals
@@ -97,9 +99,13 @@ namespace Movement
 
         uint32 moveFlags = unit.m_movementInfo.GetMovementFlags();
         if (args.flags.walkmode)
+        {
             moveFlags |= MOVEFLAG_WALK_MODE;
+        }
         else
+        {
             moveFlags &= ~MOVEFLAG_WALK_MODE;
+        }
 
         moveFlags |= MOVEFLAG_FORWARD;
 
@@ -148,12 +154,16 @@ namespace Movement
 
         // If boarded use current local position
         if (transportInfo)
+        {
             transportInfo->GetLocalPosition(real_position.x, real_position.y, real_position.z, real_position.orientation);
+        }
 
         // there is a big chance that current position is unknown if current state is not finalized, need compute it
         // this also allows calculate spline position and update map position in much greater intervals
         if (!move_spline.Finalized() && !transportInfo)
+        {
             real_position = move_spline.ComputePosition();
+        }
 
         if (args.path.empty())
         {

@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,13 +35,6 @@
  * @{
  * \file
  */
-
-
-/**
- * Format is YYYYMMDDRR where RR is the change in the conf file
- * for that day.
- */
-#define AUCTIONHOUSEBOT_CONF_VERSION    2010102201
 
 #include "Policies/Singleton.h"
 
@@ -505,7 +498,7 @@ void AuctionBotConfig::setConfig(AuctionBotConfigBoolValues index, char const* f
 void AuctionBotConfig::GetConfigFromFile()
 {
     // Check config file version
-    if (m_AhBotCfg.GetIntDefault("ConfVersion", 0) != AUCTIONHOUSEBOT_CONF_VERSION)
+    if (m_AhBotCfg.GetIntDefault("ConfVersion", 0) != AHBOT_CONFIG_VERSION)
     {
         sLog.outError("AHBot: Configuration file version doesn't match expected version. Some config variables may be wrong or missing.");
     }
@@ -746,7 +739,7 @@ uint32 AuctionBotBuyer::GetBuyableEntry(AHB_Buyer_Config& config)
             ItemPrototype const* prototype = item->GetProto();
             if (prototype)
             {
-                BuyerItemInfo& buyerItem = config.SameItemInfo[item->GetEntry()];    // Structure constructor will make sure Element are correctly initialised if entry is created here.
+                BuyerItemInfo& buyerItem = config.SameItemInfo[item->GetEntry()];  // Structure constructor will make sure Element are correctly initialised if entry is created here.
                 ++buyerItem.ItemCount;
                 buyerItem.BuyPrice = buyerItem.BuyPrice + (Aentry->buyout / item->GetCount());
                 buyerItem.BidPrice = buyerItem.BidPrice + (Aentry->startbid / item->GetCount());
@@ -772,7 +765,7 @@ uint32 AuctionBotBuyer::GetBuyableEntry(AHB_Buyer_Config& config)
 
                 if (Aentry->owner == sAuctionBotConfig.GetAHBotId())
                 {
-                    if ((Aentry->bid != 0) && Aentry->bidder) // Add bided by player
+                    if ((Aentry->bid != 0) && Aentry->bidder)                      // Add bided by player
                     {
                         config.CheckedEntry[Aentry->Id].LastExist = Now;
                         config.CheckedEntry[Aentry->Id].AuctionId = Aentry->Id;
@@ -1174,14 +1167,18 @@ bool AuctionBotSeller::Initialize()
         std::stringstream includeStream(sAuctionBotConfig.GetAHBotIncludes());
         std::string temp;
         while (getline(includeStream, temp, ','))
-            { includeItems.push_back(atoi(temp.c_str())); }
+        {
+            includeItems.push_back(atoi(temp.c_str()));
+        }
     }
 
     {
         std::stringstream excludeStream(sAuctionBotConfig.GetAHBotExcludes());
         std::string temp;
         while (getline(excludeStream, temp, ','))
-            { excludeItems.push_back(atoi(temp.c_str())); }
+        {
+            excludeItems.push_back(atoi(temp.c_str()));
+        }
     }
     sLog.outString("Forced Inclusion " SIZEFMTD " items", includeItems.size());
     sLog.outString("Forced Exclusion " SIZEFMTD " items", excludeItems.size());
@@ -1492,16 +1489,24 @@ bool AuctionBotSeller::Initialize()
                 {
                     if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_REQ_LEVEL))
                         if (prototype->RequiredLevel < value)
+                        {
                             continue;
+                        }
                     if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_REQ_LEVEL))
                         if (prototype->RequiredLevel > value)
+                        {
                             continue;
+                        }
                     if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MIN_SKILL_RANK))
                         if (prototype->RequiredSkillRank < value)
+                        {
                             continue;
+                        }
                     if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_MISC_MOUNT_MAX_SKILL_RANK))
                         if (prototype->RequiredSkillRank > value)
+                        {
                             continue;
+                        }
                 }
 
                 if (prototype->Flags & ITEM_FLAG_LOOTABLE)
@@ -1523,16 +1528,24 @@ bool AuctionBotSeller::Initialize()
             {
                 if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_REQ_LEVEL))
                     if (prototype->RequiredLevel < value)
+                    {
                         continue;
+                    }
                 if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_REQ_LEVEL))
                     if (prototype->RequiredLevel > value)
+                    {
                         continue;
+                    }
                 if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MIN_ITEM_LEVEL))
                     if (prototype->RequiredLevel < value)
+                    {
                         continue;
+                    }
                 if (uint32 value = sAuctionBotConfig.getConfig(CONFIG_UINT32_AHBOT_CLASS_GLYPH_MAX_ITEM_LEVEL))
                     if (prototype->RequiredLevel > value)
+                    {
                         continue;
+                    }
                 break;
             }
             case ITEM_CLASS_TRADE_GOODS:
@@ -2176,8 +2189,12 @@ void AuctionHouseBot::Rebuild(bool all)
         {
             AuctionEntry* entry = itr->second;
             if (entry->owner == sAuctionBotConfig.GetAHBotId())                                    // ahbot auction
+            {
                 if (all || entry->bid == 0)                                                        // expire auction now if no bid or forced
+                {
                     entry->expireTime = sWorld.GetGameTime();
+                }
+            }
         }
     }
 }

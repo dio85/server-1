@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #include "InstanceData.h"
 #ifdef ENABLE_ELUNA
 #include "LuaEngine.h"
-#endif /* ENABLE_ELUNA */
+#endif /*ENABLE_ELUNA*/
 
 Totem::Totem() : Creature(CREATURE_SUBTYPE_TOTEM)
 {
@@ -57,14 +57,18 @@ bool Totem::Create(uint32 guidlow, CreatureCreatePos& cPos, CreatureInfo const* 
     if (owner->GetTypeId() == TYPEID_PLAYER)
     {
         if (uint32 modelid_race = sObjectMgr.GetModelForRace(GetNativeDisplayId(), owner->getRaceMask()))
+        {
             SetDisplayId(modelid_race);
+        }
     }
 
     cPos.SelectFinalPoint(this);
 
     // totem must be at same Z in case swimming caster and etc.
     if (fabs(cPos.m_pos.z - owner->GetPositionZ()) > 5.0f)
+    {
         cPos.m_pos.z = owner->GetPositionZ();
+    }
 
     if (!cPos.Relocate(this))
     {
@@ -75,7 +79,9 @@ bool Totem::Create(uint32 guidlow, CreatureCreatePos& cPos, CreatureInfo const* 
     // Only works if you create the object in it, not if it is moves to that map.
     // Normally non-players do not teleport to other maps.
     if (InstanceData* iData = GetMap()->GetInstanceData())
+    {
         iData->OnCreatureCreate(this);
+    }
 
     LoadCreatureAddon(false);
 
@@ -97,7 +103,9 @@ void Totem::Update(uint32 update_diff, uint32 time)
         return;
     }
     else
+    {
         m_duration -= update_diff;
+    }
 
     Creature::Update(update_diff, time);
 }
@@ -108,7 +116,9 @@ void Totem::Summon(Unit* owner)
     owner->GetMap()->Add((Creature*)this);
 
     if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->AI())
+    {
         ((Creature*)owner)->AI()->JustSummoned((Creature*)this);
+    }
 #ifdef ENABLE_ELUNA
     sEluna->OnSummoned(this, owner);
 #endif /* ENABLE_ELUNA */
@@ -153,18 +163,24 @@ void Totem::UnSummon()
                 {
                     Player* Target = itr->getSource();
                     if (Target && pGroup->SameSubGroup((Player*)owner, Target))
+                    {
                         Target->RemoveAurasDueToSpell(GetSpell());
+                    }
                 }
             }
         }
 
         if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->AI())
+        {
             ((Creature*)owner)->AI()->SummonedCreatureDespawn((Creature*)this);
+        }
     }
 
     // any totem unsummon look like as totem kill, req. for proper animation
     if (IsAlive())
+    {
         SetDeathState(DEAD);
+    }
 
     AddObjectToRemoveList();
 }
@@ -181,7 +197,7 @@ Unit* Totem::GetOwner()
 {
     if (ObjectGuid ownerGuid = GetOwnerGuid())
     {
-        return ObjectAccessor::GetUnit(*this, ownerGuid);
+        return sObjectAccessor.GetUnit(*this, ownerGuid);
     }
 
     return NULL;
@@ -195,10 +211,14 @@ void Totem::SetTypeBySummonSpell(SpellEntry const* spellProto)
     {
         // If spell have cast time -> so its active totem
         if (GetSpellCastTime(totemSpell))
+        {
             m_type = TOTEM_ACTIVE;
+        }
     }
     if (spellProto->SpellIconID == 2056)
-        m_type = TOTEM_STATUE;                              // Jewelery statue
+    {
+        m_type = TOTEM_STATUE;                               // Jewelery statue
+    }
 }
 
 bool Totem::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index, bool castOnSelf) const

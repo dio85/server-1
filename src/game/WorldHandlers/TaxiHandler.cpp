@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,7 +125,9 @@ void WorldSession::SendDoFlight(uint32 mountDisplayId, uint32 path, uint32 pathN
         GetPlayer()->GetMotionMaster()->MovementExpired(false);
 
     if (mountDisplayId)
+    {
         GetPlayer()->Mount(mountDisplayId);
+    }
 
     GetPlayer()->GetMotionMaster()->MoveTaxiFlight(path, pathNode);
 }
@@ -136,7 +138,9 @@ bool WorldSession::SendLearnNewTaxiNode(Creature* unit)
     uint32 curloc = sObjectMgr.GetNearestTaxiNode(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetMapId(), GetPlayer()->GetTeam());
 
     if (curloc == 0)
+    {
         return true;                                        // `true` send to avoid WorldSession::SendTaxiMenu call with one more curlock seartch with same false result.
+    }
 
     if (GetPlayer()->m_taxi.SetTaximaskNode(curloc))
     {
@@ -269,12 +273,18 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPacket& recv_data)
         sObjectMgr.GetTaxiPath(sourcenode, destinationnode, path, cost);
 
         if (path && mountDisplayId)
+        {
             SendDoFlight(mountDisplayId, path, 1);          // skip start fly node
+        }
         else
+        {
             GetPlayer()->m_taxi.ClearTaxiDestinations();    // clear problematic path and next
+        }
     }
     else
+    {
         GetPlayer()->m_taxi.ClearTaxiDestinations();        // not destinations, clear source node
+    }
 }
 
 void WorldSession::HandleActivateTaxiOpcode(WorldPacket& recv_data)

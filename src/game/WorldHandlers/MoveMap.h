@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,19 +22,18 @@
  * and lore are copyrighted by Blizzard Entertainment, Inc.
  */
 
-#ifndef _MOVE_MAP_H
-#define _MOVE_MAP_H
-
-#include "Utilities/UnorderedMapSet.h"
+#ifndef MANGOS_H_MOVE_MAP
+#define MANGOS_H_MOVE_MAP
 
 #include "../../dep/recastnavigation/Detour/Include/DetourAlloc.h"
 #include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
 #include "../../dep/recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
-class Unit;
+#include "Platform/Define.h"
+#include "Utilities/UnorderedMapSet.h"
 
 //  memory management
-inline void* dtCustomAlloc(int size, dtAllocHint /*hint*/)
+inline void* dtCustomAlloc(size_t size, dtAllocHint /*hint*/)
 {
     return (void*)new unsigned char[size];
 }
@@ -62,7 +61,9 @@ namespace MMAP
             }
 
             if (navMesh)
+            {
                 dtFreeNavMesh(navMesh);
+            }
         }
 
         dtNavMesh* navMesh;

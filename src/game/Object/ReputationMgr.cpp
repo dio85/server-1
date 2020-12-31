@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 #include "ObjectMgr.h"
 #ifdef ENABLE_ELUNA
 #include "LuaEngine.h"
-#endif /* ENABLE_ELUNA */
+#endif /*ENABLE_ELUNA*/
 
 const int32 ReputationMgr::PointsInRank[MAX_REPUTATION_RANK] = {36000, 3000, 3000, 3000, 6000, 12000, 21000, 1000};
 
@@ -106,9 +106,13 @@ ReputationRank ReputationMgr::GetBaseRank(FactionEntry const* factionEntry) cons
 void ReputationMgr::ApplyForceReaction(uint32 faction_id, ReputationRank rank, bool apply)
 {
     if (apply)
+    {
         m_forcedReactions[faction_id] = rank;
+    }
     else
+    {
         m_forcedReactions.erase(faction_id);
+    }
 }
 
 uint32 ReputationMgr::GetDefaultStateFlags(FactionEntry const* factionEntry) const
@@ -148,10 +152,10 @@ void ReputationMgr::SendState(FactionState const* faction, bool anyRankIncreased
     data << uint8(anyRankIncreased ? 1 : 0);                // display visual effect
 
     size_t p_count = data.wpos();
-    data << uint32(count);                                  // placeholder
+    data << (uint32) count;                                 // placeholder
 
-    data << uint32(faction->ReputationListID);
-    data << uint32(faction->Standing);
+    data << (uint32) faction->ReputationListID;
+    data << (uint32) faction->Standing;
 
     for (FactionStateList::iterator itr = m_factions.begin(); itr != m_factions.end(); ++itr)
     {
@@ -244,7 +248,9 @@ void ReputationMgr::Initialize()
             newFaction.needSave = true;
 
             if (newFaction.Flags & FACTION_FLAG_VISIBLE)
+            {
                 ++m_visibleFactionCount;
+            }
 
             UpdateRankCounters(REP_HOSTILE, GetBaseRank(factionEntry));
 
@@ -274,7 +280,9 @@ void ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standi
                     // bonuses are already given, so just modify standing by rate
                     int32 spilloverRep = standing * repTemplate->faction_rate[i];
                     if (SetOneFactionReputation(sFactionStore.LookupEntry(repTemplate->faction[i]), spilloverRep, incremental))
+                    {
                         anyRankIncreased = true;
+                    }
                 }
             }
         }
@@ -295,7 +303,9 @@ void ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standi
                 if (parentState != m_factions.end() && (parentState->second.Flags & FACTION_FLAG_TEAM_REPUTATION))
                 {
                     if (SetOneFactionReputation(parent, int32(spillOverRepOut), incremental))
+                    {
                         anyRankIncreased = true;
+                    }
                 }
                 else    // spill to "sister" factions
                 {
@@ -311,12 +321,16 @@ void ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standi
                 if (FactionEntry const* factionEntryCalc = sFactionStore.LookupEntry(*itr))
                 {
                     if (factionEntryCalc == factionEntry || GetRank(factionEntryCalc) > ReputationRank(factionEntryCalc->spilloverMaxRankIn))
+                    {
                         continue;
+                    }
 
                     int32 spilloverRep = int32(spillOverRepOut * factionEntryCalc->spilloverRateIn);
                     if (spilloverRep != 0 || !incremental)
                         if (SetOneFactionReputation(factionEntryCalc, spilloverRep, incremental))
+                        {
                             anyRankIncreased = true;
+                        }
                 }
             }
         }
@@ -326,7 +340,9 @@ void ReputationMgr::SetReputation(FactionEntry const* factionEntry, int32 standi
     if (faction != m_factions.end())
     {
         if (SetOneFactionReputation(factionEntry, standing, incremental))
+        {
             anyRankIncreased = true;
+        }
 
         // only this faction gets reported to client, even if it has no own visible standing
         SendState(&faction->second, anyRankIncreased);
@@ -342,12 +358,18 @@ bool ReputationMgr::SetOneFactionReputation(FactionEntry const* factionEntry, in
         int32 BaseRep = GetBaseReputation(factionEntry);
 
         if (incremental)
+        {
             standing += faction.Standing + BaseRep;
+        }
 
         if (standing > Reputation_Cap)
+        {
             standing = Reputation_Cap;
+        }
         else if (standing < Reputation_Bottom)
+        {
             standing = Reputation_Bottom;
+        }
 
         ReputationRank old_rank = ReputationToRank(faction.Standing + BaseRep);
         ReputationRank new_rank = ReputationToRank(standing);
@@ -359,7 +381,9 @@ bool ReputationMgr::SetOneFactionReputation(FactionEntry const* factionEntry, in
         SetVisible(&faction);
 
         if (new_rank <= REP_HOSTILE)
+        {
             SetAtWar(&faction, true);
+        }
 
         UpdateRankCounters(old_rank, new_rank);
 
@@ -388,7 +412,9 @@ void ReputationMgr::SetVisible(FactionTemplateEntry const* factionTemplateEntry)
     }
 
     if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionTemplateEntry->faction))
+    {
         SetVisible(factionEntry);
+    }
 }
 
 void ReputationMgr::SetVisible(FactionEntry const* factionEntry)
@@ -462,9 +488,13 @@ void ReputationMgr::SetAtWar(FactionState* faction, bool atWar)
     }
 
     if (atWar)
+    {
         faction->Flags |= FACTION_FLAG_AT_WAR;
+    }
     else
+    {
         faction->Flags &= ~FACTION_FLAG_AT_WAR;
+    }
 
     faction->needSend = true;
     faction->needSave = true;
@@ -496,9 +526,13 @@ void ReputationMgr::SetInactive(FactionState* faction, bool inactive)
     }
 
     if (inactive)
+    {
         faction->Flags |= FACTION_FLAG_INACTIVE;
+    }
     else
+    {
         faction->Flags &= ~FACTION_FLAG_INACTIVE;
+    }
 
     faction->needSend = true;
     faction->needSave = true;
@@ -534,18 +568,26 @@ void ReputationMgr::LoadFromDB(QueryResult* result)
                 uint32 dbFactionFlags = fields[2].GetUInt32();
 
                 if (dbFactionFlags & FACTION_FLAG_VISIBLE)
-                    SetVisible(faction);                    // have internal checks for forced invisibility
+                {
+                    SetVisible(faction);                     // have internal checks for forced invisibility
+                }
 
                 if (dbFactionFlags & FACTION_FLAG_INACTIVE)
-                    SetInactive(faction, true);             // have internal checks for visibility requirement
+                {
+                    SetInactive(faction, true);              // have internal checks for visibility requirement
+                }
 
                 if (dbFactionFlags & FACTION_FLAG_AT_WAR)   // DB at war
-                    SetAtWar(faction, true);                // have internal checks for FACTION_FLAG_PEACE_FORCED
+                {
+                    SetAtWar(faction, true);                 // have internal checks for FACTION_FLAG_PEACE_FORCED
+                }
                 else                                        // DB not at war
                 {
                     // allow remove if visible (and then not FACTION_FLAG_INVISIBLE_FORCED or FACTION_FLAG_HIDDEN)
                     if (faction->Flags & FACTION_FLAG_VISIBLE)
-                        SetAtWar(faction, false);           // have internal checks for FACTION_FLAG_PEACE_FORCED
+                    {
+                        SetAtWar(faction, false);            // have internal checks for FACTION_FLAG_PEACE_FORCED
+                    }
                 }
 
                 // set atWar for hostile
@@ -553,10 +595,14 @@ void ReputationMgr::LoadFromDB(QueryResult* result)
                 if (forceItr != m_forcedReactions.end())
                 {
                     if (forceItr->second <= REP_HOSTILE)
+                    {
                         SetAtWar(faction, true);
+                    }
                 }
                 else if (GetRank(factionEntry) <= REP_HOSTILE)
+                {
                     SetAtWar(faction, true);
+                }
 
                 // reset changed flag if values similar to saved in DB
                 if (faction->Flags == dbFactionFlags)
@@ -595,16 +641,28 @@ void ReputationMgr::SaveToDB()
 void ReputationMgr::UpdateRankCounters(ReputationRank old_rank, ReputationRank new_rank)
 {
     if (old_rank >= REP_EXALTED)
+    {
         --m_exaltedFactionCount;
+    }
     if (old_rank >= REP_REVERED)
+    {
         --m_reveredFactionCount;
+    }
     if (old_rank >= REP_HONORED)
+    {
         --m_honoredFactionCount;
+    }
 
     if (new_rank >= REP_EXALTED)
+    {
         ++m_exaltedFactionCount;
+    }
     if (new_rank >= REP_REVERED)
+    {
         ++m_reveredFactionCount;
+    }
     if (new_rank >= REP_HONORED)
+    {
         ++m_honoredFactionCount;
+    }
 }

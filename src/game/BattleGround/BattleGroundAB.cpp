@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -175,7 +175,9 @@ void BattleGroundAB::Update(uint32 diff)
                 // horde will be a bit disadvantaged, but we can assume that points aren't updated for both team in same Update() call
                 uint8 otherTeam = (team + 1) % PVP_TEAM_COUNT;
                 if (m_TeamScores[team] > m_TeamScores[otherTeam] + 500)
+                {
                     m_TeamScores500Disadvantage[otherTeam] = true;
+                }
             }
         }
 
@@ -596,9 +598,13 @@ void BattleGroundAB::EndBattleGround(Team winner)
 {
     // win reward
     if (winner == ALLIANCE)
+    {
         RewardHonorToTeam(GetBonusHonorFromKill(1), ALLIANCE);
+    }
     if (winner == HORDE)
+    {
         RewardHonorToTeam(GetBonusHonorFromKill(1), HORDE);
+    }
     // complete map_end rewards (even if no team wins)
     RewardHonorToTeam(GetBonusHonorFromKill(1), HORDE);
     RewardHonorToTeam(GetBonusHonorFromKill(1), ALLIANCE);

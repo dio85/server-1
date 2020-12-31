@@ -2,7 +2,7 @@
  * MaNGOS is a full featured server for World of Warcraft, supporting
  * the following clients: 1.12.x, 2.4.3, 3.3.5a, 4.3.4a and 5.4.8
  *
- * Copyright (C) 2005-2020 MaNGOS <https://getmangos.eu>
+ * Copyright (C) 2005-2021 MaNGOS <https://getmangos.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,6 @@ PathFinder::PathFinder(const Unit* owner) :
     DEBUG_FILTER_LOG(LOG_FILTER_PATHFINDING, "++ PathFinder::PathInfo for %u \n", m_sourceUnit->GetGUIDLow());
 
     uint32 mapId = m_sourceUnit->GetMapId();
-
     if (MMAP::MMapFactory::IsPathfindingEnabled(mapId, owner))
     {
         MMAP::MMapManager* mmap = MMAP::MMapFactory::createOrGetMMapManager();
@@ -57,13 +56,14 @@ PathFinder::~PathFinder()
 
 bool PathFinder::calculate(float destX, float destY, float destZ, bool forceDest)
 {
+    // Vector3 oldDest = getEndPosition();
+    Vector3 dest(destX, destY, destZ);
+    setEndPosition(dest);
+
     float x, y, z;
     m_sourceUnit->GetPosition(x, y, z);
     Vector3 start(x, y, z);
     setStartPosition(start);
-
-    Vector3 dest(destX, destY, destZ);
-    setEndPosition(dest);
 
     m_forceDestination = forceDest;
 
@@ -101,7 +101,9 @@ dtPolyRef PathFinder::getPathPolyByPosition(const dtPolyRef* polyPath, uint32 po
         float closestPoint[VERTEX_SIZE];
         dtStatus dtResult = m_navMeshQuery->closestPointOnPoly(polyPath[i], point, closestPoint, NULL);
         if (dtStatusFailed(dtResult))
+        {
             continue;
+        }
 
         float d = dtVdist2DSqr(point, closestPoint);
         if (d < minDist2d)
@@ -119,7 +121,7 @@ dtPolyRef PathFinder::getPathPolyByPosition(const dtPolyRef* polyPath, uint32 po
 
     if (distance)
     {
-        *distance = dtSqrt(minDist3d);
+        *distance = dtMathSqrtf(minDist3d);
     }
 
     return (minDist2d < 3.0f) ? nearestPoly : INVALID_POLYREF;
@@ -187,7 +189,9 @@ void PathFinder::BuildPolyPath(const Vector3& startPos, const Vector3& endPos)
             // Check for swimming or flying shortcut
             if ((startPoly == INVALID_POLYREF && m_sourceUnit->GetTerrain()->IsUnderWater(startPos.x, startPos.y, startPos.z)) ||
                 (endPoly == INVALID_POLYREF && m_sourceUnit->GetTerrain()->IsUnderWater(endPos.x, endPos.y, endPos.z)))
-                { m_type = ((Creature*)m_sourceUnit)->CanSwim() ? PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH) : PATHFIND_NOPATH; }
+            {
+                m_type = ((Creature*)m_sourceUnit)->CanSwim() ? PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH) : PATHFIND_NOPATH;
+            }
             else
             {
                 m_type = ((Creature*)m_sourceUnit)->CanFly() ? PathType(PATHFIND_NORMAL | PATHFIND_NOT_USING_PATH) : PATHFIND_NOPATH;
@@ -517,11 +521,15 @@ void PathFinder::createFilter()
     {
         Creature* creature = (Creature*)m_sourceUnit;
         if (creature->CanWalk())
-            { includeFlags |= NAV_GROUND; }          // walk
+        {
+            includeFlags |= NAV_GROUND;           // walk
+        }
 
         // creatures don't take environmental damage
         if (creature->CanSwim())
-            { includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME); }           // swim
+        {
+            includeFlags |= (NAV_WATER | NAV_MAGMA | NAV_SLIME);            // swim
+        }
     }
     else if (m_sourceUnit->GetTypeId() == TYPEID_PLAYER)
     {
@@ -658,7 +666,9 @@ bool PathFinder::getSteerTarget(const float* startPos, const float* endPos,
         // Stop at Off-Mesh link or when point is further than slop away.
         if ((steerPathFlags[ns] & DT_STRAIGHTPATH_OFFMESH_CONNECTION) ||
             !inRangeYZX(&steerPath[ns * VERTEX_SIZE], startPos, minTargetDist, 1000.0f))
-            { break; }
+        {
+            break;
+        }
         ++ns;
     }
     // Failed to find good point to steer to.
@@ -722,7 +732,7 @@ dtStatus PathFinder::findSmoothPath(const float* startPos, const float* endPos,
         // Find movement delta.
         float delta[VERTEX_SIZE];
         dtVsub(delta, steerPos, iterPos);
-        float len = dtSqrt(dtVdot(delta, delta));
+        float len = dtMathSqrtf(dtVdot(delta, delta));
         // If the steer target is end of path or off-mesh link, do not move past the location.
         if ((endOfPath || offMeshConnection) && len < SMOOTH_PATH_STEP_SIZE)
         {
