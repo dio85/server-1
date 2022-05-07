@@ -106,7 +106,7 @@ namespace MMAP
                        bool skipBattlegrounds   = false,
                        bool debugOutput         = false,
                        bool bigBaseUnit         = false,
-                       const char* offMeshFilePath = NULL);
+                       const char* offMeshFilePath = nullptr);
 
             /**
              * @brief
